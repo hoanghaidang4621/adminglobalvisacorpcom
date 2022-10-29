@@ -2,20 +2,24 @@
 
 namespace GlobalVisa\Backend\Controllers;
 
+use GlobalVisa\Models\NewExtraService;
 use GlobalVisa\Models\VisaLanguage;
 use GlobalVisa\Models\VisaExtraservice;
 use GlobalVisa\Models\VisaExtraserviceLang;
 use Phalcon\Paginator\Adapter\Model as PaginatorModel;
-use GlobalVisa\Repositories\Language;
 use GlobalVisa\Repositories\ExtraService;
-use GlobalVisa\Repositories\ExtraServiceLang;
 use GlobalVisa\Utils\Validator;
 
 class ExtraserviceController extends ControllerBase
 {
     public function indexAction()
     {
-        $list_service = $this->getParameter();
+        $group_id = $this->request->get("slcGroup");
+        if(is_null($group_id)){
+            $group_id = [];
+        }
+        $list_service = $this->getParameter($group_id);
+        $getGroup = ExtraService::getGroup($group_id);
         $current_page = $this->request->get('page');
         $validator = new Validator();
         if ($validator->validInt($current_page) == false || $current_page < 1)
@@ -39,6 +43,7 @@ class ExtraserviceController extends ControllerBase
         }
         $this->view->setVars(array(
             'list_data' => $paginator->getPaginate(),
+            'group_extra_service' => $getGroup,
             'msg_result' => $msg_result,
             'msg_delete' => $msg_delete,
         ));
@@ -46,20 +51,37 @@ class ExtraserviceController extends ControllerBase
 
     public function createAction()
     {
+        $this->view->pick($this->controllerName . '/model');
         $data = array('service_id' => -1, 'service_active' => 'Y','service_order' => 1);
+        $group_id = $this->request->get("slcGroup");
+        if(is_null($group_id)){
+            $group_id = [];
+        }
+        $getGroup = ExtraService::getGroup($group_id);
         $messages = array();
         if ($this->request->isPost()) {
+            if(!isset($_POST['save'])){
+                $this->view->disable();
+                $this->response->redirect("notfound");
+                return;
+            }
             $data = array(
                 'service_name' => $this->request->getPost("txtName", array('string', 'trim')),
                 'service_active' => $this->request->getPost("radActive"),
                 'service_order' => $this->request->getPost("txtOrder", array('string', 'trim')),
                 'service_listed_price' => $this->request->getPost("txtListedPrice", array('string', 'trim')),
+                'service_group_id' => $this->request->getPost("slcGroup"),
                 'service_price' => $this->request->getPost("txtPrice", array('string', 'trim')),
                 'service_discount' => $this->request->getPost("txtDiscount", array('string', 'trim')),
                 'service_description' => trim($this->request->getPost("txtDescription")),
             );
             if (empty($data['service_name'])) {
                 $messages['service_name'] = "Name field is required.";
+            }
+            if (empty($data["service_group_id"])) {
+                $messages["service_group_id"] = "Group field is required.";
+            } elseif (!is_numeric($data['service_group_id'])) {
+                $messages["service_group_id"] = "Group  is number.";
             }
             if (empty($data["service_listed_price"])) {
                 $messages["service_listed_price"] = "Listed Price field is required.";
@@ -77,7 +99,7 @@ class ExtraserviceController extends ControllerBase
                 $messages["service_order"] = "Order  is number.";
             }
             if (count($messages) == 0) {
-                $new_service = new VisaExtraService();
+                $new_service = new NewExtraService();
                 $message = "We can't store your info now:" . "<br/>";
                 if ($new_service->save($data)) {
                     $message = 'Create the Extra Service ID: ' . $new_service->getServiceId() . ' success.';
@@ -96,7 +118,8 @@ class ExtraserviceController extends ControllerBase
         $messages["status"] = "border-red";
         $data['mode'] = 'create';
         $this->view->setVars(array(
-            'title' => 'Create Car',
+            'title' => 'Create extra service',
+            'group_extra_service' => $getGroup,
             'formData' => $data,
             'messages' => $messages,
         ));
@@ -104,147 +127,105 @@ class ExtraserviceController extends ControllerBase
 
     public function editAction()
     {
+        $this->view->pick($this->controllerName . '/model');
         $id = $this->request->get('id');
         $service_model = ExtraService::findFirstById($id);
         if(empty($service_model))
         {
             return $this->response->redirect('notfound');
         }
-        $data_post = $service_model->toArray();
         $messages = array();
-        $save_mode = '';
-        $lang_default = $this->globalVariable->defaultLanguage;
-        $lang_current = $lang_default;
-        $arr_language = Language::arrLanguages();
+
         if($this->request->isPost()) {
             if(!isset($_POST['save'])){
                 $this->view->disable();
                 $this->response->redirect("notfound");
                 return;
             }
-            $save_mode =  $_POST['save'] ;
-            if (isset($arr_language[$save_mode])) {
-                $lang_current = $save_mode;
-            }
-            if($save_mode != VisaLanguage::GENERAL) {
-                $data_post['service_name'] = $this->request->getPost("txtName", array('string', 'trim'));
-                $data_post['service_description'] = trim($this->request->getPost("txtDescription"));
-                if (empty($data_post['service_name'])) {
-                    $messages[$save_mode]['service_name'] = 'Name field is required.';
-                }
-            } else {
-                $data_post['service_active'] =  $this->request->getPost("radActive", array('string', 'trim'));
-                $data_post['service_order'] =  $this->request->getPost("txtOrder", array('string', 'trim'));
-                $data_post['service_listed_price'] = $this->request->getPost("txtListedPrice", array('string', 'trim'));
-                $data_post['service_price'] = $this->request->getPost("txtPrice", array('string', 'trim'));
-                $data_post['service_discount'] = $this->request->getPost("txtDiscount", array('string', 'trim'));
-                if (empty($data_post["service_order"])) {
-                    $messages["service_order"] = "Order field is required.";
-                } elseif (!is_numeric($data_post['service_order'])) {
-                    $messages["service_order"] = "Order  is number.";
-                }
-                if (empty($data_post["service_listed_price"])) {
-                    $messages["service_listed_price"] = "Listed Price field is required.";
-                } elseif (!is_numeric($data_post['service_listed_price'])) {
-                    $messages["service_listed_price"] = "Listed Price  is number.";
-                }
-                if (empty($data_post["service_price"])) {
-                    $messages["service_price"] = "Price field is required.";
-                } elseif (!is_numeric($data_post['service_price'])) {
-                    $messages["service_price"] = "Price  is number.";
-                }
-
-            }
-            if(empty($messages)) {
-                switch ($save_mode) {
-                    case VisaLanguage::GENERAL:
-                        $result = $service_model->update($data_post);
-                        $info = VisaLanguage::GENERAL;
-
-                        break;
-                    case $this->globalVariable->defaultLanguage :
-                        $service_model->setServiceName($data_post['service_name']);
-                        $service_model->setServiceDescription($data_post['service_description']);
-                        $result = $service_model->save();
-                        $info = $arr_language[$save_mode];
-                        break;
-                    default:
-                        $service_lang_model = ExtraserviceLang::findFirstByIdAndLang($id, $save_mode);
-                        if (!$service_lang_model) {
-                            $service_lang_model = new VisaExtraServiceLang();
-                            $service_lang_model->setServiceId($id);
-                            $service_lang_model->setServiceLangCode($save_mode);
-                        }
-                        $service_lang_model->setServiceName($data_post['service_name']);
-                        $service_lang_model->setServiceDescription($data_post['service_description']);
-                        $result = $service_lang_model->save();
-                        $info = $arr_language[$save_mode];
-                        break;
-                }
-                if ($result) {
-                    $messages = array(
-                        'message' => ucfirst($info . " Update Extra Service success"),
-                        'typeMessage' => "success",
-                    );
-                }else{
-                    $messages = array(
-                        'message' => "Update Extra Service fail",
-                        'typeMessage' => "error",
-                    );
-                }
-            }
-        }
-        $item = array(
-            'service_id' =>$service_model->getServiceId(),
-            'service_name'=>($save_mode === $this->globalVariable->defaultLanguage)?$data_post['service_name']:$service_model->getServiceName(),
-            'service_description'=>($save_mode === $this->globalVariable->defaultLanguage)?$data_post['service_description']:$service_model->getServiceDescription(),
-        );
-        $arr_translate[$lang_default] = $item;
-        $arr_service_lang = ExtraserviceLang::findById($id);
-        foreach ($arr_service_lang as $service_lang){
-            $item = array(
-                'service_id'=>$service_lang->getServiceId(),
-                'service_name'=>($save_mode === $service_lang->getServiceLangCode())?$data_post['service_name']:$service_lang->getServiceName(),
-                'service_description'=>($save_mode === $service_lang->getServiceLangCode())?$data_post['service_description']:$service_lang->getServiceDescription(),
+            $data = array(
+                'service_name' => $this->request->getPost("txtName", array('string', 'trim')),
+                'service_active' => $this->request->getPost("radActive"),
+                'service_order' => $this->request->getPost("txtOrder", array('string', 'trim')),
+                'service_listed_price' => $this->request->getPost("txtListedPrice", array('string', 'trim')),
+                'service_group_id' => $this->request->getPost("slcGroup"),
+                'service_price' => $this->request->getPost("txtPrice", array('string', 'trim')),
+                'service_discount' => $this->request->getPost("txtDiscount", array('string', 'trim')),
+                'service_description' => trim($this->request->getPost("txtDescription")),
             );
-            $arr_translate[$service_lang->getServiceLangCode()] = $item;
-        }
-        if(!isset($arr_translate[$save_mode])&& isset($arr_language[$save_mode])){
-            $item = array(
-                'service_id'=> -1,
-                'service_name'=> $data_post['service_name'],
-                'service_description'=> $data_post['service_description'],
-            );
-            $arr_translate[$save_mode] = $item;
+            if (empty($data['service_name'])) {
+                $messages['service_name'] = "Name field is required.";
+            }
+            if (empty($data["service_group_id"])) {
+                $messages["service_group_id"] = "Group field is required.";
+            } elseif (!is_numeric($data['service_group_id'])) {
+                $messages["service_group_id"] = "Group  is number.";
+            }
+            if (empty($data["service_listed_price"])) {
+                $messages["service_listed_price"] = "Listed Price field is required.";
+            } elseif (!is_numeric($data['service_listed_price'])) {
+                $messages["service_listed_price"] = "Listed Price  is number.";
+            }
+            if (empty($data["service_price"])) {
+                $messages["service_price"] = "Price field is required.";
+            } elseif (!is_numeric($data['service_price'])) {
+                $messages["service_price"] = "Price  is number.";
+            }
+            if (empty($data["service_order"])) {
+                $messages["service_order"] = "Order field is required.";
+            } elseif (!is_numeric($data['service_order'])) {
+                $messages["service_order"] = "Order  is number.";
+            }
+
+            if (count($messages) == 0) {
+                $msg_result = array();
+                if ($service_model->update($data)) {
+                    $msg_result = array('status' => 'success', 'msg' => 'Edit extra service Success');
+                } else {
+                    $message = "We can't store your info now: \n";
+                    foreach ($service_model->getMessages() as $msg) {
+                        $message .= $msg . "\n";
+                    }
+                    $msg_result['status'] = 'error';
+                    $msg_result['msg'] = $message;
+                }
+                $this->session->set('msg_result', $msg_result);
+                return $this->response->redirect("/extraservice");
+            }
         }
         $formData = array(
+            'service_name' => $service_model->getServiceName(),
             'service_id'=>$service_model->getServiceId(),
-            'service_active' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['service_active']:$service_model->getServiceActive(),
-            'service_order' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['service_order']:$service_model->getServiceOrder(),
-            'service_listed_price' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['service_listed_price']:$service_model->getServiceListedPrice(),
-            'service_price' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['service_price']:$service_model->getServicePrice(),
-            'service_discount' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['service_discount']:$service_model->getServiceDiscount(),
-            'arr_translate' => $arr_translate,
-            'arr_language' => $arr_language,
-            'lang_default' => $lang_default,
-            'lang_current' => $lang_current
+            'service_active' =>$service_model->getServiceActive(),
+            'service_order' => $service_model->getServiceOrder(),
+            'service_listed_price' => $service_model->getServiceListedPrice(),
+            'service_price' => $service_model->getServicePrice(),
+            'service_group_id' => $service_model->getServiceGroupId(),
+            'service_discount' =>$service_model->getServiceDiscount(),
+            'service_description'  =>$service_model->getServiceDescription(),
         );
+        $getGroup = ExtraService::getGroup($formData['service_group_id']);
         $messages['status'] = 'border-red';
         $this->view->setVars([
             'formData' => $formData,
+            'group_extra_service' => $getGroup,
             'messages' => $messages,
         ]);
 
     }
-    private function getParameter()
+    private function getParameter($group_id)
     {
         $keyword = trim($this->request->get("txtSearch"));
         $arrParameter = [];
-        $sql = "SELECT * FROM GlobalVisa\Models\VisaExtraService AS m WHERE 1 ";
+        $sql = "SELECT * FROM GlobalVisa\Models\NewExtraService AS m WHERE 1 ";
         if (!empty($keyword)) {
             $sql .= " AND m.service_id  = :keyword: OR m.service_name like CONCAT('%',:keyword:,'%') ";
             $arrParameter['keyword'] = $keyword;
             $this->dispatcher->setParam("txtSearch", $keyword);
+        }
+        if (!empty($group_id)) {
+            $sql .= " AND m.service_group_id  = :id:";
+            $arrParameter['id'] = $group_id;
+            $this->dispatcher->setParam("slcGroup", $group_id);
         }
 
         $sql .= " ORDER BY m.service_id DESC";
@@ -266,7 +247,6 @@ class ExtraserviceController extends ControllerBase
                         $msg_result['msg'] .= $message_delete;
                     }else{
                         $count_delete ++;
-                        ExtraserviceLang::deleteById($id);
                     }
                 }
             }

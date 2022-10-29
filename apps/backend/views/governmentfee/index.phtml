@@ -1,6 +1,14 @@
+<?php
+
+$urlPage = "?";
+if (strlen($this->dispatcher->getParam("slcArrival")) > 0) {
+    if ($urlPage != "?") $urlPage .= "&";
+    $urlPage .= http_build_query(array("slcArrival" => $this->dispatcher->getParam("slcArrival")));
+}
+?>
 <div class="page-title">
     <div class="title_left">
-        <h3 class="type-title">Government Fee</h3>
+        <h3 class="type-title">Government fee</h3>
     </div>
 </div>
 <?php if (isset($msg_result['status'])) { ?>
@@ -13,43 +21,82 @@
 <div class="row">
     <div class="col-md-12 col-sm-12 col-xs-12">
         <div class="x_panel">
-            <div class="row">
-                <form name="read_form" id="read_form" method="POST"  >
-                    <div class="col-md-1">
-                        <h2>Visa Type</h2>
-                    </div>
+            <div class="x_title">
+                <div class="row ">
                     <div class="col-md-2">
-                        <select class="form-control" name="slcVisaType" id="slcVisaType">
-                            <?= $select_visa_type ?>
+                        <h2>Arrival country</h2>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-control" name="slcArrival" id="slcArrival">
+                            <?php
+                            echo isset($select_arrival_country) ? $select_arrival_country : "";
+                            ?>
                         </select>
                     </div>
-                </form>
-                <div class="ln_solid"></div>
+                </div>
             </div>
-            <div class="row">
-                <form name="edit_form" id="edit_form" action=""
-                      data-parsley-validate class="form-horizontal form-label-left" method="post">
-                      <?= $html_country ?>
-                    <div class="ln_solid"></div>
-                    <div class="form-group">
-                        <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
-                            <button name="sbmFee" type="submit" class="btn btn-success">
-                                Save
-                            </button>
-                        </div>
+            <ul class="nav nav-pills" role="tablist">
+                <?php
+                foreach ( $list_type_visa as $type_visa ){
+                    $active = $type_visa->getTypeId()== $type_id?"active":"";
+                    ?>
+                    <li role="presentation" class="<?= $active; ?>">
+                        <a href="#<?= $type_visa->getTypeId() ?>visatype"
+                           aria-controls="<?= $type_visa->getTypeId() ?>visatype"
+                           role="tab"
+                           data-toggle="tab"><?= $type_visa->getTypeName() ?></a>
+                    </li>
+                <?php } ?>
+            </ul>
+            <div class="tab-content">
+                <?php foreach ( $list_type_visa as $type_visa ){
+                    $active = $type_visa->getTypeId()== $type_id?"active":"";
+                    ?>
+                    <div role="tabpanel" class="tab-pane <?= $active ?>" id="<?= $type_visa->getTypeId() ?>visatype">
+                        <form name="type-form<?= $type_visa->getTypeId() ?>" id="type-form<?= $type_visa->getTypeId() ?>" action=""
+                              data-parsley-validate class="form-horizontal form-label-left" method="post">
+                            <input type="hidden" name="txtTypeID" id="txtTypeID" value="<?= $type_visa->getTypeId() ?>" />
+                            <div class="ln_solid"></div>
+                            <div class="row">
+                                    <h2><strong>Country</strong></h2>
+                                    <?php foreach ($list_country as $country ) { ?>
+                                        <div class='col-md-4 text-right' style='padding-top:20px; display: flex; align-items: center;' >
+                                            <div style='flex: 1 0 170px; padding-right: 15px'><?= $country->country_name ?> </div>
+                                            <input name='txtFee<?= $country->country_id ?>'
+                                                   value='<?= \GlobalVisa\Repositories\GovernmentFee::getGovernmentFee($type_visa->getTypeId(),$country->country_code)  ?>' maxlength='10'
+                                                   class='form-control text-right' style='max-width:70px;'   >
+                                            <span class='add-on' style='background-color: #f5f5f5; height: 34px; display: flex; justify-content: center; align-items: center; padding: 5px; margin: 0 10px;'>USD</span>
+                                            <input name='txtNote<?= $country->country_id ?>' value='<?= \GlobalVisa\Repositories\GovernmentFee::getGovernmentNote($type_visa->getTypeId(),$country->country_code)  ?>'  placeholder='' class='form-control text-right'>
+                                        </div>
+                                    <?php } ?>
+                            </div>
+                            <div class="ln_solid"></div>
+                            <div class="form-group">
+                                <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+                                    <button name="sbmFee<?= $type_visa->getTypeId() ?>" type="submit" class="btn btn-success">
+                                        <?php echo 'Save (' . $type_visa->getTypeName().')'; ?>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                <?php } ?>
             </div>
-
         </div>
-
     </div>
+
 </div>
 <script>
-    $(document).ready(function(){
-        $("#slcVisaType").change(function(){
-            var visa_type_id = $("#slcVisaType option:selected").val();
-            window.location.href = '/governmentfee?slcVisaType='+visa_type_id;
+    $(document).ready(function () {
+        $("[name='slcArrival']").on('change', function() {
+            var slcArrival = $("#slcArrival option:selected").val();
+            window.location.href = '/governmentfee?slcArrival='+slcArrival;
+        });
+        $('#savechange').click(function () {
+            $('form[name=form-type]').prop('action', '<?php echo $this->url->get('/arrivalnationality/save'); ?>');
+            $('form[name=form-type]').submit();
         });
     });
+
+
 </script>

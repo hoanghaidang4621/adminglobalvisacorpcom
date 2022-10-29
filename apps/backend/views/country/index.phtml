@@ -29,15 +29,7 @@ if(strlen($this->dispatcher->getParam("txtSearch"))> 0){
                             <h2 class="">Keyword</h2>
                         </div>
                         <div class="col-md-4">
-                            <input maxlength="255" class="form-control" type="text" name="txtSearch" placeholder="ID, Name" value="<?php echo isset($keyword) ? $keyword : ""; ?>">
-                        </div>
-                        <h2>Language</h2>
-                        <div class="col-md-3">
-                            <select class="form-control" name="slcLang" id="slcLang">
-                                <?php
-                                echo isset($select_lang) ? $select_lang : "";
-                                ?>
-                            </select>
+                            <input maxlength="255" class="form-control" type="text" name="txtSearch" placeholder="ID,Code,Name" value="<?php echo isset($keyword) ? $keyword : ""; ?>">
                         </div>
                         <div class="col-md-3">
                             <button type="button" name="search" class="btn btn-success">Search</button>
@@ -60,7 +52,6 @@ if(strlen($this->dispatcher->getParam("txtSearch"))> 0){
                                 <th width="50px" class="column-title">ID </th>
                                 <th class="column-title">Code</th>
                                 <th class="column-title">Name</th>
-                                <th class="column-title">Value</th>
                                 <th width="50px" class="column-title">Order </th>
                                 <th width="50px" class="column-title">Active </th>
                                 <th width="50px" class="column-title no-link last"><span class="nobr">Action</span></th>
@@ -75,7 +66,6 @@ if(strlen($this->dispatcher->getParam("txtSearch"))> 0){
                                     <td class=" "><?php echo $item->getCountryId(); ?></td>
                                     <td class=" "><?php echo $item->getCountryCode(); ?></td>
                                     <td class=" "><?=  $item->getCountryName(); ?></td>
-                                    <td class=" "><?=  $item->getCountryValue(); ?></td>
                                     <td class=" "><?=  $item->getCountryOrder(); ?></td>
                                     <td class="text-center" data-title="Active">
                                         <?php

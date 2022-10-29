@@ -1,0 +1,110 @@
+<?php
+
+$urlPage = "?";
+if (strlen($this->dispatcher->getParam("slcArrival")) > 0) {
+    if ($urlPage != "?") $urlPage .= "&";
+    $urlPage .= http_build_query(array("slcArrival" => $this->dispatcher->getParam("slcArrival")));
+}
+?>
+<div class="page-title">
+    <div class="title_left">
+        <h3>Arrival Nationality</h3>
+    </div>
+</div>
+<?php if (isset($msg_result) && count($msg_result) > 0) { ?>
+    <div class="clearfix"></div>
+    <div class="alert alert-<?php echo $msg_result['status'] ?> alert-dismissible fade in" role="alert">
+        <?php echo $msg_result['msg']; ?>
+    </div>
+<?php } ?>
+<?php $message_success = isset($msg_del["success"]) ? $msg_del["success"] : '';
+$message_error = isset($msg_del["error"]) ? $msg_del["error"] : '';
+if (!empty($message_success)) { ?>
+    <div class="clearfix"></div>
+    <div class="alert alert-success alert-dismissible fade in" role="alert">
+        <?php echo $message_success; ?>
+    </div>
+<?php }
+if (!empty($message_error)) { ?>
+    <div class="clearfix"></div>
+    <div class="alert alert-error alert-dismissible fade in" role="alert">
+        <?php echo $message_error; ?>
+    </div>
+<?php } ?>
+<?php if (isset($msg_delete['error']) && !empty($msg_delete['error'])) { ?>A
+    <div class="clearfix"></div>
+    <div class="alert alert-error alert-dismissible fade in" role="alert">
+        <?php echo $msg_delete['error']; ?>
+    </div>
+<?php } ?>
+<?php if (isset($msg_delete['success']) && !empty($msg_delete['success'])) { ?>
+    <div class="clearfix"></div>
+    <div class="alert alert-success alert-dismissible fade in" role="alert">
+        <?php echo $msg_delete['success']; ?>
+    </div>
+<?php } ?>
+<div class="clearfix"></div>
+<form class="searchForm" name="form-type" method="post" action="">
+    <?php $keyword = $this->dispatcher->getParam("txtSearch");
+    ?>
+    <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <div class="row ">
+                        <div class="col-md-2">
+                            <label>Select arrival</label>
+                            <select class="form-control" name="slcArrival" id="slcArrival">
+                                <?php
+                                echo isset($select_arrival) ? $select_arrival : "";
+                                ?>
+                            </select>
+                            <input type="hidden" value="<?php echo($arrival_id) ?>" name="arrival_id">
+                        </div>
+                    </div>
+                    <div>
+                        <strong>Total</strong>
+                        <?php echo(count($country)) ?> Country
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <div class="toggle-content" >
+                        <?php foreach ($country as $item) {   $item=$item->toArray() ; ?>
+                            <div class="col-md-3 country_block">
+                                <label class="container_checkbox" >
+                                    <?php echo $item['country_name'] ?>
+                                    <input <?php echo $list_insight_country_code_selected != NULL && in_array($item['country_code'], $list_insight_country_code_selected) ? 'checked' : ''; ?>
+                                            type="checkbox" class="form-control check "
+                                            name="dataInsightCountryCode[]"
+                                            id="<?php echo $item['country_code'] ?>"
+                                            value="<?php echo $item['country_code'] ?>">
+                                    <span class="checkmark_checkbox"></span>
+                                </label>
+                            </div>
+                        <?php } ?>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+                        <button name="savechange" id="savechange" type="submit" class="btn btn-success">Save change</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<script>
+    $(document).ready(function () {
+        $("[name='slcArrival']").on('change', function() {
+            $('form[name=form-type]').prop('action', '<?php echo $this->url->get('/arrivalnationality'); ?>');
+            $('form[name=form-type]').submit();
+        });
+        $('#savechange').click(function () {
+            $('form[name=form-type]').prop('action', '<?php echo $this->url->get('/arrivalnationality/save'); ?>');
+            $('form[name=form-type]').submit();
+        });
+    });
+
+
+</script>

@@ -8,6 +8,11 @@ if (strlen($this->dispatcher->getParam("txtSearch")) > 0) {
     if ($urlPage != "?") $urlPage .= "&";
     $urlPage .= http_build_query(array("txtSearch" => $this->dispatcher->getParam("txtSearch")));
 }
+if (strlen($this->dispatcher->getParam("slcCountry")) > 0) {
+    if ($urlPage != "?") $urlPage .= "&";
+    $urlPage .= http_build_query(array("slcCountry" => $this->dispatcher->getParam("slcCountry")));
+}
+
 ?>
 <div class="page-title">
     <div class="title_left">
@@ -59,6 +64,14 @@ if (!empty($message_error)) { ?>
                             </select>
                         </div>
                         <div class="col-md-2">
+                            <select class="form-control" name="slcCountry" id="slcCountry">
+                                <option value="0">All country</option>
+                                <?php
+                                echo isset($select_country) ? $select_country : "";
+                                ?>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
                             <button type="button" name="search" class="btn btn-success">Search</button>
                             <a class="btn btn-info" href="<?php echo $this->url->get("/port/create"); ?>">Add New</a>
                         </div>
@@ -81,6 +94,7 @@ if (!empty($message_error)) { ?>
                                 <th width="50px" class="column-title">ID</th>
                                 <th class="column-title">Name</th>
                                 <th class="column-title">Port Type</th>
+                                <th class="column-title">From Countrye</th>
                                 <th width="50px" class="column-title">Order</th>
                                 <th width="50px" class="column-title">Active</th>
                                 <th width="50px" class="column-title no-link last"><span class="nobr">Action</span></th>
@@ -91,23 +105,24 @@ if (!empty($message_error)) { ?>
                             <?php foreach ($list_port->items as $item) { ?>
                                 <tr>
                                     <td><label class="container_checkbox"><input class="check" name="item[]"
-                                                                                 value="<?php echo $item->getPortId() ?>"
+                                                                                 value="<?php echo $item->port_id ?>"
                                                                                  type="checkbox"><span
                                                     class="checkmark_checkbox"></span></label></td>
-                                    <td class=" "><?= $item->getPortId() ?></td>
-                                    <td class=" "><?= $item->getPortName() ?></td>
-                                    <td class=" "><?= \GlobalVisa\Repositories\PortType::getNameById($item->getPortTypeId()) ?></td>
-                                    <td class=" "><?= $item->getPortOrder() ?></td>
+                                    <td class=" "><?= $item->port_id ?></td>
+                                    <td class=" "><?= $item->port_name ?></td>
+                                    <td class=" "><?= $item->type_name ?></td>
+                                    <td class=" "><?= $item->country_name ?></td>
+                                    <td class=" "><?= $item->port_order ?></td>
                                     <td class="text-center" data-title="Active">
                                         <?php
-                                        $status = $item->getPortActive();
+                                        $status = $item->port_active;
                                         $classStatus = ($status == "Y") ? "success" : "danger";
                                         ?>
                                         <span class="label label-<?php echo $classStatus; ?>"><?php echo $status; ?></span>
                                     </td>
 
                                     <td><a class="btn btn-primary btn-xs margin-0"
-                                           href="<?php echo $this->url->get("/port/edit?id=" . $item->getPortId()); ?> ">View</a>
+                                           href="<?php echo $this->url->get("/port/edit?id=" . $item->port_id); ?> ">View</a>
                                     </td>
                                 </tr>
 

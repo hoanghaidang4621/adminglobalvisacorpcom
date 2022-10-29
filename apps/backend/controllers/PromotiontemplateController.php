@@ -50,7 +50,6 @@ class PromotiontemplateController extends ControllerBase
         $data = array('template_id' => -1);
         if ($this->request->isPost()) {
             $data = array(
-                'template_id' => -1,
                 'template_title' => $this->request->getPost("txtTitle", array('string', 'trim')),
                 'template_content' => trim($this->request->getPost("txtContent")),
             );
@@ -62,16 +61,18 @@ class PromotiontemplateController extends ControllerBase
                 $messages["content"] = "Content field is required.";
             }
             if (count($messages) == 0) {
+
                 $new_promotion_template = new VisaPromotionTemplate();
                 $new_promotion_template->setTemplateTitle($data['template_title']);
                 $new_promotion_template->setTemplateContent($data['template_content']);
                 if ($new_promotion_template->save() === true) {
                     $msg_result = array('status' => 'success', 'msg' => 'Create Promotion Template Success');
                     $this->session->set('msg_result', $msg_result);
-                    return $this->response->redirect('/promotiontemplate');
                 } else {
                     $msg_result = array('status' => 'error', 'msg' => 'Create Promotion Template Fail !');
-                }                
+                    $this->session->set('msg_result', $msg_result);
+                }
+                return $this->response->redirect('/promotiontemplate');
             }
         }
         $messages['status'] = 'border-red';
@@ -115,17 +116,14 @@ class PromotiontemplateController extends ControllerBase
                 $new_promotion_template->setTemplateContent($data_post['template_content']);
                 $result = $new_promotion_template->update();
                 if ($result) {
-                    $messages = array(
-                        'message' => ucfirst(" Update Promotion Template success"),
-                        'typeMessage' => "success",
-                    );
+                    $msg_result = array('status' => 'success', 'msg' => 'Update Promotion Template Success');
+                    $this->session->set('msg_result', $msg_result);
                 } else {
-                    $messages = array(
-                        'message' => "Update Promotion Template fail",
-                        'typeMessage' => "error",
-                    );
+                    $msg_result = array('status' => 'error', 'msg' => 'Update Promotion Template Fail !');
+                    $this->session->set('msg_result', $msg_result);
                 }
-        }
+                return $this->response->redirect('/promotiontemplate');
+            }
         }
         $template_model = PromotionTemplate::findFirstById($id);
         $item = array(

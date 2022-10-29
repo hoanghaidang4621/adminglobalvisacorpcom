@@ -8,7 +8,7 @@
 
 namespace GlobalVisa\Backend\Controllers;
 
-use GlobalVisa\Models\VisaRole;
+use GlobalVisa\Models\NewRole as VisaRole;
 use GlobalVisa\Repositories\Role;
 use GlobalVisa\Repositories\User;
 use GlobalVisa\Utils\Validator;

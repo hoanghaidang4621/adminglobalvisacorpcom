@@ -2,7 +2,7 @@
 
 namespace GlobalVisa\Repositories;
 
-use GlobalVisa\Models\VisaRole;
+use GlobalVisa\Models\NewRole as VisaRole;
 use Phalcon\Mvc\User\Component;
 
 class Role extends Component

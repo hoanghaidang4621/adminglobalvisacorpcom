@@ -10,6 +10,16 @@
                 $('.msg-type').text('');
                 $('#slcType').removeClass("border-red");
             }
+
+            if ($('select[name=slcCountry]').val() == '') {
+                $('.msg-country').text('Country field is required.');
+                $('#slcCountry').addClass("border-red");
+                valid = false;
+            } else {
+                $('.msg-country').text('');
+                $('#slcCountry').removeClass("border-red");
+            }
+
             if ($('input[name=txtName]').val() == '') {
                 $('.msg-name').text('Name field is required.');
                 $('#txtName').addClass("border-red");
@@ -61,11 +71,24 @@
                         <div class="col-md-6 col-sm-6 col-xs-12">
                             <select id="slcType" name="slcType"
                                     class="form-control <?php echo isset($messages["port_type_id"]) ? $messages["status"] : ""; ?>">
-                                <option value="">Select Type...</option>
+                                <option value="">Select port...</option>
                                 <?= isset($select_port_type) ? $select_port_type : ""
                                 ?>
                             </select>
-                            <span class="text-danger msg-type"><?php echo isset($messages["article_type_id"]) ? $messages["article_type_id"] : "" ?></span>
+                            <span class="text-danger msg-type"><?php echo isset($messages["port_type_id"]) ? $messages["port_type_id"] : "" ?></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="slcType">Country <span
+                                    class="text-danger">*</span></label>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <select id="slcCountry" name="slcCountry"
+                                    class="form-control <?php echo isset($messages["port_from_country_code"]) ? $messages["status"] : ""; ?>">
+                                <option value="">Select country...</option>
+                                <?= isset($select_country) ? $select_country : ""
+                                ?>
+                            </select>
+                            <span class="text-danger msg-country"><?php echo isset($messages["port_from_country_code"]) ? $messages["port_from_country_code"] : "" ?></span>
                         </div>
                     </div>
                     <div class="form-group">
@@ -76,8 +99,8 @@
                             <input maxlength="255"
                                    value="<?php echo isset($formData["port_name"]) ? $formData["port_name"] : "" ?>"
                                    type="text" id="txtName" name="txtName"
-                                   class="form-control col-md-7 col-xs-12 <?php echo (isset($messages["name"])) ? $messages["status"] : ""; ?>">
-                            <span class="text-danger msg-name"><?php echo isset($messages["name"]) ? $messages["name"] : ""; ?></span>
+                                   class="form-control col-md-7 col-xs-12 <?php echo (isset($messages["port_name"])) ? $messages["status"] : ""; ?>">
+                            <span class="text-danger msg-name"><?php echo isset($messages["port_name"]) ? $messages["port_name"] : ""; ?></span>
                         </div>
                     </div>
                     <div class="form-group">
@@ -88,21 +111,18 @@
                             <input maxlength="10"
                                    value="<?php echo isset($formData["port_order"]) ? $formData["port_order"] : "" ?>"
                                    id="txtOrder" name="txtOrder"
-                                   class="form-control col-md-7 col-xs-12 <?php echo (isset($messages["order"])) ? $messages["status"] : ""; ?>"
+                                   class="form-control col-md-7 col-xs-12 <?php echo (isset($messages["port_order"])) ? $messages["status"] : ""; ?>"
                                    type="text">
-                            <span class="text-danger msg-order"><?php echo isset($messages["order"]) ? $messages["order"] : ""; ?></span>
+                            <span class="text-danger msg-order"><?php echo isset($messages["port_order"]) ? $messages["port_order"] : ""; ?></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="middle-name" class="control-label col-md-3 col-sm-3 col-xs-12">Active</label>
+                        <label for="middle-name" class="control-label col-md-3 col-sm-3 col-xs-12">Active </label>
                         <div class="col-md-6 col-sm-6 col-xs-12 form-check">
-                            <label class="container_radio"><input type="radio" name="radActive"
-                                                                  value="Y" <?php echo (isset($formData["port_active"]) && $formData["port_active"] == "Y") ? "checked" : ''; ?>>Yes<span
-                                        class="checkmark"></span></label>
-                            <label class="container_radio"><input type="radio" name="radActive"
-                                                                  value="N" <?php echo (isset($formData["port_active"]) && $formData["port_active"] == "N") ? "checked" : ''; ?>>No<span
-                                        class="checkmark"></span></label>
+                            <label class="container_radio"><input type="radio" name="radActive" value="Y" <?php echo (isset($formData["port_active"]) && $formData["port_active"]=="Y" )  ? "checked" : '' ; ?>>Yes<span class="checkmark"></span></label>
+                            <label class="container_radio"><input type="radio" name="radActive" value="N" <?php echo (isset($formData["port_active"]) && $formData["port_active"]=="N" )  ? "checked" : '' ; ?>>No<span class="checkmark"></span></label>
                         </div>
+                        <span class="text-danger msg-active"><?php echo isset($messages["port_active"]) ? $messages["port_active"] : ""; ?></span>
                     </div>
                     <div class="ln_solid"></div>
                     <div class="form-port">

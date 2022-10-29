@@ -26,7 +26,7 @@ class Type extends Component
     public static function getParentIdType($str = "", $parent=0, $inputslc)
     {
         $modelsManager = Di::getDefault()->get('modelsManager');
-        $sql = 'SELECT type_id ,type_name FROM GlobalVisa\Models\VisaType WHERE type_parent_id = :parentID: AND type_location_country_code = "gx" Order By type_order ASC';
+        $sql = 'SELECT type_id ,type_name FROM GlobalVisa\Models\VisaType WHERE type_parent_id = :parentID: Order By type_order ASC';
         $data = $modelsManager->executeQuery($sql,
             array(
                 "parentID" => $parent

@@ -1,8 +1,13 @@
 <?php
+
 $urlPage = "?";
 if(strlen($this->dispatcher->getParam("txtSearch"))> 0){
     if($urlPage != "?") $urlPage .= "&";
     $urlPage .= http_build_query(array("txtSearch" => $this->dispatcher->getParam("txtSearch")));
+}
+if(strlen($this->dispatcher->getParam("slcArrivalCountry"))> 0){
+    if($urlPage != "?") $urlPage .= "&";
+    $urlPage .= http_build_query(array("slcArrivalCountry" => $this->dispatcher->getParam("slcArrivalCountry")));
 }
 ?>
 <div class="page-title">
@@ -56,7 +61,17 @@ if(!empty($message_success)) { ?>
                         <div class="col-md-2">
                             <input maxlength="255" class="form-control" type="text" name="txtSearch" placeholder="ID, Name" value="<?php echo isset($keyword) ? $keyword : ""; ?>">
                         </div>
-
+                        <div class="col-md-2">
+                            <h2>Arrival country</h2>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-control" name="slcArrivalCountry" id="slcArrivalCountry">
+                                <option value="">All Traveling to Country</option>
+                                <?php
+                                echo isset($select_arrival_country) ? $select_arrival_country : "";
+                                ?>
+                            </select>
+                        </div>
 
                         <div class="col-md-1 ">
                             <button type="button" name="search" class="btn btn-success">Search</button>
@@ -80,6 +95,7 @@ if(!empty($message_success)) { ?>
                                 <th width="10px" class="column-title">Id </th>
                                 <th   class="column-title">Name </th>
                                 <th   class="column-title">Group </th>
+                               <th   class="column-title">Arrival Country </th>
                                 <th  width="100px"  class="column-title">Order</th>
 
                                 <th width="50px"  class="column-title">Active </th>
@@ -92,31 +108,32 @@ if(!empty($message_success)) { ?>
                             <?php
                             foreach ($list_data->items as $item) {
                                 ?>
-                                <?php
-                                /**
-                                 *  @var GlobalVisa\Models\VisaVisaType $item
-                                 **/
-                                ?>
-                                <tr >
-                                    <td><label class="container_checkbox"><input class="check" name="item[]" value="<?php echo $item->getTypeId() ?>" type="checkbox"><span class="checkmark_checkbox"></span></label></td>
-                                    <td class=" "><?php echo $item->getTypeId() ?></td>
-                                    <td  class="text-left"><?= $item->getTypeName() ?></td>
-                                    <td  class="text-left"><?= $item->getTypeGroupName() ?></td>
-                                    <td class="text-center"  ><?= $item->getTypeOrder() ?></td>
+
+                                <tr>
+                                    <td><label class="container_checkbox"><input class="check" name="item[]"
+                                                                                 value="<?php echo $item->type_id ?>"
+                                                                                 type="checkbox"><span
+                                                    class="checkmark_checkbox"></span></label></td>
+                                    <td class=" "><?php echo $item->type_id ?></td>
+                                    <td class="text-left"><?= $item->type_name ?></td>
+                                    <td class="text-left"><?= $item->type_group_name ?></td>
+                                    <td class="text-center"><?= $item->country_name ?></td>
+                                    <td class="text-left"><?= $item->type_order ?></td>
                                     <td class="text-center" data-title="Active">
                                         <?php
-                                        $status = $item->getTypeActive();
-                                        $classStatus = ($status == "Y") ? "success" : "danger" ;
+                                        $status = $item->type_active;
+                                        $classStatus = ($status == "Y") ? "success" : "danger";
                                         ?>
                                         <span class="label label-<?php echo $classStatus; ?>"><?php echo $status; ?></span>
                                     </td>
 
                                     <td>
-                                        <a class="btn btn-primary btn-xs margin-0"   href="<?php echo $this->url->get("/visatype/edit?id=".$item->getTypeId()); ?> ">View</a>
+                                        <a class="btn btn-primary btn-xs margin-0"
+                                           href="<?php echo $this->url->get("/visatype/edit?id=" . $item->type_id); ?> ">View</a>
                                     </td>
                                 </tr>
 
-                            <?php }?>
+                            <?php } ?>
                             </tbody>
                         </table>
 

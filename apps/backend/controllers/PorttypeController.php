@@ -2,11 +2,10 @@
 
 namespace GlobalVisa\Backend\Controllers;
 
+use GlobalVisa\Models\NewPortType;
 use GlobalVisa\Models\VisaLanguage;
-use GlobalVisa\Models\VisaPortType;
 use GlobalVisa\Models\VisaPortTypeLang;
 use Phalcon\Paginator\Adapter\Model as PaginatorModel;
-use GlobalVisa\Repositories\Language;
 use GlobalVisa\Repositories\PortType;
 use GlobalVisa\Repositories\PortTypeLang;
 use GlobalVisa\Utils\Validator;
@@ -14,7 +13,12 @@ class PorttypeController extends ControllerBase
 {
     public function indexAction()
     {
-        $list_type = $this->getParameter();
+        $arrival_id = $this->request->get("slcArrivalCountry");
+        if(is_null($arrival_id)){
+            $arrival_id = [];
+        }
+        $list_type = $this->getParameter($arrival_id);
+        $country_code = PortType::getArrival($arrival_id);
         $current_page = $this->request->get('page');
         $validator = new Validator();
         if ($validator->validInt($current_page) == false || $current_page < 1)
@@ -40,30 +44,40 @@ class PorttypeController extends ControllerBase
             'list_data' => $paginator->getPaginate(),
             'msg_result' => $msg_result,
             'msg_delete' => $msg_delete,
+            'select_arrival_country' => $country_code,
         ));
     }
 
     public function createAction()
     {
-        $data = array('type_id' => -1, 'type_active' => 'Y','type_order' => 1);
+        $this->view->pick($this->controllerName . '/model');
+        $data = array('type_arrival_id' => '' , 'type_active' => 'Y');
         $messages = array();
+        $getCountry = PortType::getArrival($data['type_arrival_id']);
         if ($this->request->isPost()) {
             $data = array(
                 'type_name' => $this->request->getPost("txtName", array('string', 'trim')),
-                'type_active' => $this->request->getPost("radActive"),
+                'type_arrival_id' => $this->request->getPost("slcArrival"),
                 'type_order' => $this->request->getPost("txtOrder", array('string', 'trim')),
+                'type_active' => $this->request->getPost("radActive", array('string', 'trim')),
             );
 
             if (empty($data['type_name'])) {
                 $messages['type_name'] = "Name field is required.";
+            }
+            if (empty($data['type_arrival_id'])) {
+                $messages['type_arrival_id'] = "Arrival field is required.";
             }
             if (empty($data["type_order"])) {
                 $messages["type_order"] = "Order field is required.";
             } elseif (!is_numeric($data['type_order'])) {
                 $messages["type_order"] = "Order  is number.";
             }
+            if (empty($data['type_active'])) {
+                $messages['type_active'] = "Arrival field is required.";
+            }
             if (count($messages) == 0) {
-                $new_type = new VisaPortType();
+                $new_type = new NewPortType();
                 $message = "We can't store your info now:" . "<br/>";
                 if ($new_type->save($data)) {
                     $message = 'Create the Type ID: ' . $new_type->getTypeId() . ' success.';
@@ -82,137 +96,97 @@ class PorttypeController extends ControllerBase
         $messages["status"] = "border-red";
         $data['mode'] = 'create';
         $this->view->setVars(array(
+            'title' => 'Add Port Type',
             'formData' => $data,
             'messages' => $messages,
+            'select_arrival'=> $getCountry
         ));
     }
 
     public function editAction()
     {
+        $this->view->pick($this->controllerName . '/model');
+        $data = array('country_code' => '');
         $id = $this->request->get('id');
-        $type_model = PortType::findFirstById($id);
-        if(empty($type_model))
-        {
+        $checkID = new Validator();
+        if (!$checkID->validInt($id)) {
             return $this->response->redirect('notfound');
         }
-        $data_post = $type_model->toArray();
+        $arrival = PortType::findFirstById($id);
+        if (empty($arrival)) {
+            return $this->response->redirect('notfound');
+        }
+        $data = $arrival->toArray();
+        $data['country_code'] = $data['type_arrival_id'];
         $messages = array();
-        $save_mode = '';
-        $lang_default = $this->globalVariable->defaultLanguage;
-        $lang_current = $lang_default;
-        $arr_language = Language::arrLanguages();
-        if($this->request->isPost()) {
-            if(!isset($_POST['save'])){
-                $this->view->disable();
-                $this->response->redirect("notfound");
-                return;
-            }
-            $save_mode =  $_POST['save'] ;
-            if (isset($arr_language[$save_mode])) {
-                $lang_current = $save_mode;
-            }
-            if($save_mode != VisaLanguage::GENERAL) {
-                $data_post['type_name'] = $this->request->getPost("txtName", array('string', 'trim'));
-                if (empty($data_post['type_name'])) {
-                    $messages[$save_mode]['type_name'] = 'Name field is required.';
-                }
-            } else {
-                $data_post['type_active'] =  $this->request->getPost("radActive", array('string', 'trim'));
-                $data_post['type_order'] =  $this->request->getPost("txtOrder", array('string', 'trim'));
-                if (empty($data_post["type_order"])) {
-                    $messages["type_order"] = "Order field is required.";
-                } elseif (!is_numeric($data_post['type_order'])) {
-                    $messages["type_order"] = "Order  is number.";
-                }
+        if ($this->request->isPost()) {
 
-            }
-            if(empty($messages)) {
-                switch ($save_mode) {
-                    case VisaLanguage::GENERAL:
-                        $result = $type_model->update($data_post);
-                        $info = VisaLanguage::GENERAL;
-
-                        break;
-                    case $this->globalVariable->defaultLanguage :
-                        $type_model->setTypeName($data_post['type_name']);
-                        $result = $type_model->save();
-                        $info = $arr_language[$save_mode];
-                        break;
-                    default:
-                        $type_lang_model = PortTypeLang::findFirstByIdAndLang($id, $save_mode);
-                        if (!$type_lang_model) {
-                            $type_lang_model = new VisaPortTypeLang();
-                            $type_lang_model->setTypeId($id);
-                            $type_lang_model->setTypeLangCode($save_mode);
-                        }
-                        $type_lang_model->setTypeName($data_post['type_name']);
-
-                        $result = $type_lang_model->save();
-                        $info = $arr_language[$save_mode];
-                        break;
-                }
-                if ($result) {
-                    $messages = array(
-                        'message' => ucfirst($info . " Update PortType success"),
-                        'typeMessage' => "success",
-                    );
-                }else{
-                    $messages = array(
-                        'message' => "Update Port Type fail",
-                        'typeMessage' => "error",
-                    );
-                }
-            }
-        }
-        $item = array(
-            'type_id' =>$type_model->getTypeId(),
-            'type_name'=>($save_mode === $this->globalVariable->defaultLanguage)?$data_post['type_name']:$type_model->getTypeName(),
-        );
-
-        $arr_translate[$lang_default] = $item;
-        $arr_type_lang = PortTypeLang::findById($id);
-
-        foreach ($arr_type_lang as $type_lang){
-            $item = array(
-                'type_id'=>$type_lang->getTypeId(),
-                'type_name'=>($save_mode === $type_lang->getTypeLangCode())?$data_post['type_name']:$type_lang->getTypeName(),
+            $data = array(
+                'type_name' => $this->request->getPost("txtName", array('string', 'trim')),
+                'type_arrival_id' => $this->request->getPost("slcArrival"),
+                'type_order' => $this->request->getPost("txtOrder", array('string', 'trim')),
+                'type_active' => $this->request->getPost("radActive", array('string', 'trim')),
             );
-            $arr_translate[$type_lang->getTypeLangCode()] = $item;
+
+            if (empty($data['type_name'])) {
+                $messages['type_name'] = "Name field is required.";
+            }
+            if (empty($data['type_arrival_id'])) {
+                $messages['type_arrival_id'] = "Arrival field is required.";
+            }
+            if (empty($data["type_order"])) {
+                $messages["type_order"] = "Order field is required.";
+            } elseif (!is_numeric($data['type_order'])) {
+                $messages["type_order"] = "Order  is number.";
+            }
+            if (empty($data['type_active'])) {
+                $messages['type_active'] = "Arrival field is required.";
+            }
+            if (count($messages) == 0) {
+                $msg_result = array();
+                if ($arrival->update($data)) {
+                    $msg_result = array('status' => 'success', 'msg' => 'Edit arrival Success');
+                } else {
+                    $message = "We can't store your info now: \n";
+                    foreach ($arrival->getMessages() as $msg) {
+                        $message .= $msg . "\n";
+                    }
+                    $msg_result['status'] = 'error';
+                    $msg_result['msg'] = $message;
+                }
+                $this->session->set('msg_result', $msg_result);
+                return $this->response->redirect("/porttype");
+            }
         }
-        if(!isset($arr_translate[$save_mode])&& isset($arr_language[$save_mode])){
-            $item = array(
-                'type_id'=> -1,
-                'type_name'=> $data_post['type_name'],
-            );
-            $arr_translate[$save_mode] = $item;
-        }
-        $formData = array(
-            'type_id'=>$type_model->getTypeId(),
-            'type_active' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['type_active']:$type_model->getTypeActive(),
-            'type_order' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['type_order']:$type_model->getTypeOrder(),
-            'arr_translate' => $arr_translate,
-            'arr_language' => $arr_language,
-            'lang_default' => $lang_default,
-            'lang_current' => $lang_current
-        );
-        $messages['status'] = 'border-red';
-        $this->view->setVars([
-            'formData' => $formData,
+        $country_code = PortType::getArrival($data['country_code']);
+        $messages["status"] = "border-red";
+
+        $this->view->setVars(array(
+            'title' => 'Edit Port Type',
+            'formData' => $data,
             'messages' => $messages,
-        ]);
-
+            'select_arrival' => $country_code,
+        ));
     }
-    private function getParameter()
+
+    private function getParameter($arrival_id)
     {
         $keyword = trim($this->request->get("txtSearch"));
         $arrParameter = [];
-        $sql = "SELECT * FROM GlobalVisa\Models\VisaPortType AS m WHERE 1 ";
+        $sql = "SELECT m.type_id,m.type_name,m.type_arrival_id,m.type_order,m.type_active,c.country_name
+                FROM GlobalVisa\Models\NewPortType AS m 
+                INNER JOIN GlobalVisa\Models\NewArrival AS a ON m.type_arrival_id = a.arrival_id
+                 INNER JOIN GlobalVisa\Models\NewCountry AS c ON c.country_code = a.arrival_country_code WHERE 1";
         if (!empty($keyword)) {
             $sql .= " AND m.type_id  = :keyword: OR m.type_name like CONCAT('%',:keyword:,'%') ";
             $arrParameter['keyword'] = $keyword;
             $this->dispatcher->setParam("txtSearch", $keyword);
         }
-
+        if (!empty($arrival_id)) {
+            $sql .= " AND m.type_arrival_id  = :arrival_id: ";
+            $arrParameter['arrival_id'] = $arrival_id;
+            $this->dispatcher->setParam("slcArrivalCountry", $arrival_id);
+        }
         $sql .= " ORDER BY m.type_id DESC";
         return $this->modelsManager->executeQuery($sql, $arrParameter);
     }

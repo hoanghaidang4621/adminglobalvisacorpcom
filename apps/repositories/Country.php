@@ -2,8 +2,8 @@
 
 namespace GlobalVisa\Repositories;
 
+use GlobalVisa\Models\NewCountry;
 use Phalcon\Di;
-use GlobalVisa\Models\VisaCountry;
 use Phalcon\Mvc\User\Component;
 
 class Country extends Component
@@ -11,37 +11,19 @@ class Country extends Component
 
     public static function findFirstById($id)
     {
-        return VisaCountry::findFirst(array(
+        return NewCountry::findFirst(array(
             "country_id =:ID:",
             'bind' => array('ID' => $id)
         ));
     }
-
-
-    public static function getHtml($type_id){
-        $countries = VisaCountry::find("country_active='Y' AND country_value > 0");
-        $output ='<div class="row">';
-        foreach ($countries as $value)
-        {
-            $countryFee = GovernmentFee::findFirstById($type_id,$value->getCountryId());
-            $fee = "";
-            $note = "";
-            if($countryFee){
-                $fee = $countryFee->getFeeValue();
-                $note = $countryFee->getFeeNote();
-            }
-
-            $output.= "<div class='col-md-4 text-right' style='padding-top:20px; display: flex; align-items: center;' >";
-            $output.= "<div style='flex: 1 0 170px; padding-right: 15px'>" .$value->getCountryName(). "</div>";
-            $output.="<input name='txtFee".$value->getCountryId()."' value='".$fee."' maxlength='10' value='".$fee."' class='form-control text-right' style='max-width:70px;'   >";
-            $output.="<span class='add-on' style='background-color: #f5f5f5; height: 34px; display: flex; justify-content: center; align-items: center; padding: 5px; margin: 0 10px;'>USD</span>";
-            $output.="<input name='txtNote".$value->getCountryId()."' value='".$note."'  placeholder='' class='form-control text-right'>";
-            $output.= "</div> ";
-
-        }
-        $output .= "</div>";
-        return $output;
+    public static function findByCountryCode($country_code)
+    {
+        return NewCountry::find(array(
+            'country_code = :country_code:',
+            'bind' => array('country_code' => $country_code),
+        ));
     }
+
     //Function get String for type
     public static function getCombobox($countryId)
     {

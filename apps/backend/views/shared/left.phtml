@@ -43,24 +43,39 @@ if (isset($role_function)) {
                                 Content <span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu" <?php echo ($check_content_sub) ? $menu_sub_active : ""; ?> >
 
-                                <?php if (Role::checkiMenuItem($role_function, "type")) { ?>
-                                    <li <?php echo ($this->dispatcher->getControllerName() === "type") ? $menu_sub_sub_active : ""; ?> >
-                                        <a href="<?php echo $this->url->get("/type"); ?>">Type</a>
-                                    </li>
-                                <?php } ?>
-                                <?php if (Role::checkiMenuItem($role_function, "article")) { ?>
-                                    <li <?php echo ($this->dispatcher->getControllerName() === "article") ? $menu_sub_sub_active : ""; ?> >
-                                        <a href="<?php echo $this->url->get("/article"); ?>">Article</a>
-                                    </li>
-                                <?php } ?>
-                                <?php if (Role::checkiMenuItem($role_function, "banner")) { ?>
-                                    <li <?php echo ($this->dispatcher->getControllerName() === "banner") ? $menu_sub_sub_active : ""; ?> >
-                                        <a href="<?php echo $this->url->get("/banner"); ?>">Banner</a>
-                                    </li>
-                                <?php } ?>
+<!--                                --><?php //if (Role::checkiMenuItem($role_function, "type")) { ?>
+<!--                                    <li --><?php //echo ($this->dispatcher->getControllerName() === "type") ? $menu_sub_sub_active : ""; ?><!-- >-->
+<!--                                        <a href="--><?php //echo $this->url->get("/type"); ?><!--">Type</a>-->
+<!--                                    </li>-->
+<!--                                --><?php //} ?>
+<!--                                --><?php //if (Role::checkiMenuItem($role_function, "article")) { ?>
+<!--                                    <li --><?php //echo ($this->dispatcher->getControllerName() === "article") ? $menu_sub_sub_active : ""; ?><!-- >-->
+<!--                                        <a href="--><?php //echo $this->url->get("/article"); ?><!--">Article</a>-->
+<!--                                    </li>-->
+<!--                                --><?php //} ?>
+<!--                                --><?php //if (Role::checkiMenuItem($role_function, "banner")) { ?>
+<!--                                    <li --><?php //echo ($this->dispatcher->getControllerName() === "banner") ? $menu_sub_sub_active : ""; ?><!-- >-->
+<!--                                        <a href="--><?php //echo $this->url->get("/banner"); ?><!--">Banner</a>-->
+<!--                                    </li>-->
+<!--                                --><?php //} ?>
                                 <?php if (Role::checkiMenuItem($role_function, "visatype")) { ?>
                                     <li <?php echo ($this->dispatcher->getControllerName() === "visatype") ? $menu_sub_sub_active : ""; ?> >
                                         <a href="<?php echo $this->url->get("/visatype"); ?>">Visa Type</a>
+                                    </li>
+                                <?php } ?>
+                                <?php if (Role::checkiMenuItem($role_function, "arrivalnationality")) { ?>
+                                    <li <?php echo ($this->dispatcher->getControllerName() === "arrivalnationality") ? $menu_sub_sub_active : ""; ?> >
+                                        <a href="<?php echo $this->url->get("/arrivalnationality"); ?>">Arrival Nationality</a>
+                                    </li>
+                                <?php } ?>
+                                <?php if (Role::checkiMenuItem($role_function, "arrival")) { ?>
+                                    <li <?php echo ($this->dispatcher->getControllerName() === "arrival") ? $menu_sub_sub_active : ""; ?> >
+                                        <a href="<?php echo $this->url->get("/arrival"); ?>">Arrival</a>
+                                    </li>
+                                <?php } ?>
+                                <?php if (Role::checkiMenuItem($role_function, "country")) { ?>
+                                    <li <?php echo ($this->dispatcher->getControllerName() === "country") ? $menu_sub_sub_active : ""; ?> >
+                                        <a href="<?php echo $this->url->get("/country"); ?>">Country</a>
                                     </li>
                                 <?php } ?>
                                 <?php if (Role::checkiMenuItem($role_function, "groupapplicant")) { ?>
@@ -78,26 +93,26 @@ if (isset($role_function)) {
                                         <a href="<?php echo $this->url->get("/port"); ?>">Port</a>
                                     </li>
                                 <?php } ?>
-                                <?php if (Role::checkiMenuItem($role_function, "car")) { ?>
-                                    <li <?php echo ($this->dispatcher->getControllerName() === "car") ? $menu_sub_sub_active : ""; ?> >
-                                        <a href="<?php echo $this->url->get("/car"); ?>">Car</a>
-                                    </li>
-                                <?php } ?>
-                                <?php if (Role::checkiMenuItem($role_function, "country")) { ?>
-                                    <li <?php echo ($this->dispatcher->getControllerName() === "country") ? $menu_sub_sub_active : ""; ?> >
-                                        <a href="<?php echo $this->url->get("/country"); ?>">Country</a>
-                                    </li>
-                                <?php } ?>
-                                <?php if (Role::checkiMenuItem($role_function, "newspaper")) { ?>
-                                    <li <?php echo ($this->dispatcher->getControllerName() === "newspaper") ? $menu_sub_sub_active : ""; ?> >
-                                        <a href="<?php echo $this->url->get("/newspaper"); ?>">Newspaper</a>
-                                    </li>
-                                <?php } ?>
-                                <?php if (Role::checkiMenuItem($role_function, "newspaperarticle")) { ?>
-                                    <li <?php echo ($this->dispatcher->getControllerName() === "newspaperarticle") ? $menu_sub_sub_active : ""; ?> >
-                                        <a href="<?php echo $this->url->get("/newspaperarticle"); ?>">Newspaper Article</a>
-                                    </li>
-                                <?php } ?>
+<!--                                --><?php //if (Role::checkiMenuItem($role_function, "car")) { ?>
+<!--                                    <li --><?php //echo ($this->dispatcher->getControllerName() === "car") ? $menu_sub_sub_active : ""; ?><!-- >-->
+<!--                                        <a href="--><?php //echo $this->url->get("/car"); ?><!--">Car</a>-->
+<!--                                    </li>-->
+<!--                                --><?php //} ?>
+<!--                                --><?php //if (Role::checkiMenuItem($role_function, "country")) { ?>
+<!--                                    <li --><?php //echo ($this->dispatcher->getControllerName() === "country") ? $menu_sub_sub_active : ""; ?><!-- >-->
+<!--                                        <a href="--><?php //echo $this->url->get("/country"); ?><!--">Country</a>-->
+<!--                                    </li>-->
+<!--                                --><?php //} ?>
+<!--                                --><?php //if (Role::checkiMenuItem($role_function, "newspaper")) { ?>
+<!--                                    <li --><?php //echo ($this->dispatcher->getControllerName() === "newspaper") ? $menu_sub_sub_active : ""; ?><!-- >-->
+<!--                                        <a href="--><?php //echo $this->url->get("/newspaper"); ?><!--">Newspaper</a>-->
+<!--                                    </li>-->
+<!--                                --><?php //} ?>
+<!--                                --><?php //if (Role::checkiMenuItem($role_function, "newspaperarticle")) { ?>
+<!--                                    <li --><?php //echo ($this->dispatcher->getControllerName() === "newspaperarticle") ? $menu_sub_sub_active : ""; ?><!-- >-->
+<!--                                        <a href="--><?php //echo $this->url->get("/newspaperarticle"); ?><!--">Newspaper Article</a>-->
+<!--                                    </li>-->
+<!--                                --><?php //} ?>
                             </ul>
                         </li>
                     <?php } ?>
@@ -110,16 +125,16 @@ if (isset($role_function)) {
                                             <a href="<?php echo $this->url->get("/visafee"); ?>">Visa Fee</a>
                                         </li>
                                     <?php } ?>
-                                    <?php if (Role::checkiMenuItem($role_function, "fasttrackfee")) { ?>
-                                        <li <?php echo ($this->dispatcher->getControllerName() === "fasttrackfee") ? $menu_sub_sub_active : ""; ?> >
-                                            <a href="<?php echo $this->url->get("/fasttrackfee"); ?>">Fast Track Fee</a>
-                                        </li>
-                                    <?php } ?>
-                                    <?php if (Role::checkiMenuItem($role_function, "carpickupfee")) { ?>
-                                        <li <?php echo ($this->dispatcher->getControllerName() === "carpickupfee") ? $menu_sub_sub_active : ""; ?> >
-                                            <a href="<?php echo $this->url->get("/carpickupfee"); ?>">Car Pickup Fee</a>
-                                        </li>
-                                    <?php } ?>
+<!--                                    --><?php //if (Role::checkiMenuItem($role_function, "fasttrackfee")) { ?>
+<!--                                        <li --><?php //echo ($this->dispatcher->getControllerName() === "fasttrackfee") ? $menu_sub_sub_active : ""; ?><!-- >-->
+<!--                                            <a href="--><?php //echo $this->url->get("/fasttrackfee"); ?><!--">Fast Track Fee</a>-->
+<!--                                        </li>-->
+<!--                                    --><?php //} ?>
+<!--                                    --><?php //if (Role::checkiMenuItem($role_function, "carpickupfee")) { ?>
+<!--                                        <li --><?php //echo ($this->dispatcher->getControllerName() === "carpickupfee") ? $menu_sub_sub_active : ""; ?><!-- >-->
+<!--                                            <a href="--><?php //echo $this->url->get("/carpickupfee"); ?><!--">Car Pickup Fee</a>-->
+<!--                                        </li>-->
+<!--                                    --><?php //} ?>
                                     <?php if (Role::checkiMenuItem($role_function, "processingfee")) { ?>
                                         <li <?php echo ($this->dispatcher->getControllerName() === "processingfee") ? $menu_sub_sub_active : ""; ?> >
                                             <a href="<?php echo $this->url->get("/processingfee"); ?>">Processing Fee</a>
@@ -128,6 +143,16 @@ if (isset($role_function)) {
                                     <?php if (Role::checkiMenuItem($role_function, "governmentfee")) { ?>
                                         <li <?php echo ($this->dispatcher->getControllerName() === "governmentfee") ? $menu_sub_sub_active : ""; ?> >
                                             <a href="<?php echo $this->url->get("/governmentfee"); ?>">Government Fee</a>
+                                        </li>
+                                    <?php } ?>
+                                    <?php if (Role::checkiMenuItem($role_function, "countryfee")) { ?>
+                                        <li <?php echo ($this->dispatcher->getControllerName() === "countryfee") ? $menu_sub_sub_active : ""; ?> >
+                                            <a href="<?php echo $this->url->get("/countryfee"); ?>">Country Fee</a>
+                                        </li>
+                                    <?php } ?>
+                                    <?php if (Role::checkiMenuItem($role_function, "groupextraservice")) { ?>
+                                        <li <?php echo ($this->dispatcher->getControllerName() === "groupextraservice") ? $menu_sub_sub_active : ""; ?> >
+                                            <a href="<?php echo $this->url->get("/groupextraservice"); ?>">Group Extra Service</a>
                                         </li>
                                     <?php } ?>
                                     <?php if (Role::checkiMenuItem($role_function, "extraservice")) { ?>

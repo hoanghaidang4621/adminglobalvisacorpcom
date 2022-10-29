@@ -2,6 +2,7 @@
 
 namespace GlobalVisa\Backend\Controllers;
 
+use GlobalVisa\Models\NewOrder;
 use GlobalVisa\Models\VisaOrder;
 use GlobalVisa\Repositories\CountryGeneral;
 use GlobalVisa\Repositories\Payment;
@@ -16,7 +17,6 @@ class PaymentController extends ControllerBase
     {
         $data = $this->getParameter();
         $sql_table = "FROM GlobalVisa\Models\VisaPayment  p";
-
         $count_sql = "SELECT COUNT(*) AS count ";
         $select_sql = "SELECT p.payment_user_id,p.payment_insertdate,p.payment_method,p.payment_status,p.payment_id,p.payment_date,
                     p.payment_isenrolled3d,p.payment_ispassed3d,p.payment_amount,p.payment_status,p.payment_cardtype ";
@@ -120,13 +120,13 @@ class PaymentController extends ControllerBase
         $temp = $payment_model->toArray();
         $temp['payment_button_html'] ='';
         switch ($temp['payment_status']) {
-            case VisaOrder::STATUS_SUCCESS:
+            case NewOrder::STATUS_SUCCESS:
                 $temp['payment_button_html'] = '<a href="'.$this->url->get($this->lang_url . 'receipt/'.$payment_model->getFormattedId()).'" target="_blank" class="btn btn-success">Receipt</a>';
                 break;
-            case VisaOrder::STATUS_FAIL:
+            case NewOrder::STATUS_FAIL:
                 $temp['payment_button_html'] = '<a href="'.$this->url->get('invoice/'.$payment_model->getFormattedId()).'" target="_blank" class="btn btn-primary" style="height: auto">Invoice</a>';
                 break;
-            case VisaOrder::STATUS_PENDING:
+            case NewOrder::STATUS_PENDING:
                 $temp['payment_button_html'] = '<a href="'.$this->url->get('invoice/'.$payment_model->getFormattedId()).'" target="_blank" class="btn btn-primary" style="height: auto">Invoice</a>';
                 break;
 

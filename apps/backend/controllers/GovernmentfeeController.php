@@ -2,69 +2,80 @@
 
 namespace GlobalVisa\Backend\Controllers;
 
+use GlobalVisa\Models\NewArrival;
+
+use GlobalVisa\Models\NewGovernmentFee;
 use GlobalVisa\Models\VisaCountry;
 use GlobalVisa\Models\VisaGovernmentFee;
-use GlobalVisa\Models\VisaVisaType;;
-
-use GlobalVisa\Repositories\Country;
 use GlobalVisa\Repositories\GovernmentFee;
 use GlobalVisa\Repositories\VisaType;
 
 class GovernmentfeeController extends ControllerBase
 {
-
-	public function indexAction()
-	{
-        $visa_type_id = trim($this->request->get("slcVisaType"));
-        if($visa_type_id == NULL){
-            $visa_type_id = VisaType::getIdDefault();
+    public function indexAction()
+    {
+        $type_id = trim($this->request->get("txtTypeID"));
+        $arrival = array();
+        $arrival['code'] = trim($this->request->get("slcArrival"));
+        if($arrival['code'] == ''){
+            $find_arrival = NewArrival::findFirst()->toArray();
+            $arrival['id'] = $find_arrival['arrival_id'];
+            $arrival['code'] = $find_arrival['arrival_country_code'];
+        }else{
+            $find_arrival = NewArrival::findFirst('arrival_country_code ="'.$arrival['code'].'"')->toArray();
+            $arrival['id'] = $find_arrival['arrival_id'];
         }
+        if($type_id == NULL){
+            $type_id = VisaType::getIdDefaultByArrival($arrival['id']);
+        }
+        $select_arrival = GovernmentFee::getArrival( $arrival['code']);
         $msg_result = array();
         if ($this->session->has('msg_result')) {
             $msg_result = $this->session->get('msg_result');
             $this->session->remove('msg_result');
         }
-        $checkType = VisaType::findFirstById($visa_type_id);
-        if(empty($checkType)){
-            return $this->response->redirect('notfound');
+        $list_type_visa = GovernmentFee::findVisaTypeByArrival($arrival['id']);
+        if(empty($list_type_visa->toArray())) {
+            $list_type_visa = [];
         }
-        $htmlCountry = Country::getHtml($visa_type_id);
-        $list_country = VisaCountry::find("country_active='Y' AND country_value > 0");
-	    $total =0;
+        $list_country = GovernmentFee::findCountryIsAccepted($arrival['id']);
+        $total =0;
         if ($this->request->isPost()) {
             foreach ($list_country as $country){
-                $countryId = $country->getCountryId();
-                $fee  = trim($this->request->get("txtFee".$countryId));
-                $note  = trim($this->request->get("txtNote".$countryId));
-                $governmentfee = GovernmentFee::findFirstById($visa_type_id,$countryId);
+                $co_code = $country->country_code;
+                $co_id = $country->country_id;
+                $fee  = $this->request->get("txtFee".$co_id);
+                $note  = $this->request->get("txtNote".$co_id);
+                $govfee = GovernmentFee::findFirstById($type_id,$co_code);
                 if ($fee != NULL) {
-                    if (!$governmentfee) {
-                        $governmentfee = new VisaGovernmentFee();
-                        $governmentfee->setFeeVisatypeId($visa_type_id);
-                        $governmentfee->setFeeCountryId($countryId);
+                    if (!$govfee) {
+                        $govfee = new NewGovernmentFee();
+                        $govfee->setFeeVisatypeId($type_id);
+                        $govfee->setFeeCountryCode($co_code);
                     }
-                    $governmentfee->setFeeValue($fee);
-                    $governmentfee->setFeeNote($note);
-                    $result = $governmentfee->save();
+                    $govfee->setFeeValue($fee);
+                    $govfee->setFeeNote($note);
+                    $result = $govfee->save();
                     if($result)$total ++;
                 }else{
-                    if($governmentfee){
-                        $result = $governmentfee->delete();
+                    if($govfee){
+                        $result = $govfee->delete();
                         if($result) $total ++;
                     }
                 }
             }
-
             $msg_result['status'] = 'success ';
             $msg_result['msg'] = "Update $total records successfully";
             $this->session->set('msg_result', $msg_result);
-            return $this->response->redirect('governmentfee?slcVisaType='.$visa_type_id);
+            return $this->response->redirect('governmentfee?slcArrival='.$arrival['code'].'&txtTypeID='.$type_id);
         }
-        $select_visa_type = VisaType::getCombobox($visa_type_id);
         $this->view->setVars([
-            'select_visa_type' => $select_visa_type,
-            'html_country' => $htmlCountry,
+            'type_id' => $type_id,
+            'list_type_visa' => $list_type_visa,
+            'list_country' => $list_country,
             'msg_result' => $msg_result,
+            'select_arrival_country'=>$select_arrival
         ]);
     }
+
 }

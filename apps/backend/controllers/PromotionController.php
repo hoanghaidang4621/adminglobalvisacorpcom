@@ -22,7 +22,7 @@ class PromotionController extends ControllerBase
             if ($validator->validInt($keyword)) {
                 $sql->andwhere("promotion_id = :keyword:",["keyword" => $keyword]);
             } else {
-                $sql->andwhere("promotion_name like CONCAT('%',:keyword:,'%')",["keyword" => $keyword]);
+                $sql->andwhere("promotion_code like CONCAT('%',:keyword:,'%')",["keyword" => $keyword]);
             }
             $this->dispatcher->setParam("txtSearch", $keyword);
         }

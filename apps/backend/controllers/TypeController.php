@@ -26,7 +26,7 @@ class TypeController extends ControllerBase
 
     public function indexAction()
     {
-        $selectAll = '';
+//        $selectAll = '';
         /*$location_country_code = trim($this->request->get("slcLocationCountry"));*/
         $keyword = trim($this->request->get("txtSearch"));
 //        if ($location_country_code == 'all' && (substr_count(trim($keyword), ' ') > 0 || strlen(trim($keyword)) > 1)) {
@@ -36,8 +36,12 @@ class TypeController extends ControllerBase
 //            $location_country_code = strtoupper($this->globalVariable->global['code']);
 //        }
 
-        $data = $this->getParameter($location_country_code, $selectAll);
+        $data = $this->getParameter();
+
+
+
         $list_type = $this->modelsManager->executeQuery($data['sql'], $data['para']);
+
         $current_page = $this->request->get('page');
         $validator = new Validator();
         if ($validator->validInt($current_page) == false || $current_page < 1)
@@ -52,19 +56,13 @@ class TypeController extends ControllerBase
             $msg_delete = $this->session->get('msg_delete');
             $this->session->remove('msg_delete');
         }
-        $lang_search = isset($data["para"]["lang_code"]) ? $data["para"]["lang_code"] : $this->globalVariable->defaultLanguage;
         $result = array();
         if ($list_type && sizeof($list_type) > 0) {
-            if ($lang_search != $this->globalVariable->defaultLanguage) {
-                foreach ($list_type as $item) {
-                    $result[] = \Phalcon\Mvc\Model::cloneResult(
-                        new VisaType(), array_merge($item->t->toArray(), $item->tl->toArray()));
-                }
-            } else {
+
                 foreach ($list_type as $item) {
                     $result[] = \Phalcon\Mvc\Model::cloneResult(new VisaType(), $item->toArray());
                 }
-            }
+
         }
         $paginator = new NativeArray(
             [
@@ -73,7 +71,8 @@ class TypeController extends ControllerBase
                 'page' => $current_page,
             ]
         );
-        $select_location_country = Location::getCountryGlobalComboBox($location_country_code);
+//        $select_location_country = Location::getCountryGlobalComboBox($location_country_code);
+
 
         $type = new Type();
         $type_search = isset($data["para"]["type_id"]) ? $data["para"]["type_id"] : 0;
@@ -82,8 +81,6 @@ class TypeController extends ControllerBase
             'page' => $paginator->getPaginate(),
             'msg_result' => $msg_result,
             'msg_delete' => $msg_delete,
-            'select_location_country' => $select_location_country,
-            'location_country_code' => $location_country_code,
             'select_type' => $select_type,
         ));
         $replace = trim($this->request->get("txtReplace"));
@@ -97,9 +94,9 @@ class TypeController extends ControllerBase
                 $tn_log['find'] = $keyword;
                 $tn_log['replace'] = $replace;
                 $tn_log['data'] = array();
-                if ($lang_search == $this->globalVariable->defaultLanguage) {
-                    foreach ($list_type as $item) {
 
+                    foreach ($list_type as $item) {
+                        echo('<pre>'); print_r($item);die();
                         $t = 0;
                         $change_field = array();
 
@@ -137,7 +134,7 @@ class TypeController extends ControllerBase
                         }
                         if ($res) {
                             $total_success++;
-                            $key_log = 'id: ' . $item->getTypeId() . ', location_country_code: ' . $item->getTypeLocationCountryCode();
+                            $key_log = 'id: ' . $item->getTypeId();
                             $data = array(
                                 'key' => $key_log,
                                 'change' => (count($change_field) > 0) ? implode($change_field, ', ') : '',
@@ -145,55 +142,6 @@ class TypeController extends ControllerBase
                             array_push($tn_log['data'], $data);
                         }
                     }
-                } else {
-                    foreach ($list_type as $item) {
-
-                        $t = 0;
-                        $change_field = array();
-
-                        $temp = str_replace($keyword, $replace, $item->tl->getTypeName());
-                        if ($temp != $item->tl->getTypeName()) {
-                            $t++;
-                            $item->tl->setTypeName($temp);
-                            array_push($change_field, 'type_name');
-                        }
-
-                        $temp = str_replace($keyword, $replace, $item->tl->getTypeTitle());
-                        if ($temp != $item->tl->getTypeTitle()) {
-                            $t++;
-                            $item->tl->setTypeTitle($temp);
-                            array_push($change_field, 'type_title');
-                        }
-
-                        $temp = str_replace($keyword, $replace, $item->tl->getTypeMetaKeyword());
-                        if ($temp != $item->tl->getTypeMetaKeyword()) {
-                            $t++;
-                            $item->tl->setTypeMetaKeyword($temp);
-                            array_push($change_field, 'type_meta_keyword');
-                        }
-
-                        $temp = str_replace($keyword, $replace, $item->tl->getTypeMetaDescription());
-                        if ($temp != $item->tl->getTypeMetaDescription()) {
-                            $t++;
-                            $item->tl->setTypeMetaDescription($temp);
-                            array_push($change_field, 'type_meta_description');
-                        }
-
-                        $res = false;
-                        if ($t > 0) {
-                            $res = $item->tl->update();
-                        }
-                        if ($res) {
-                            $total_success++;
-                            $key_log = 'id: ' . $item->tl->getTypeId() . ', lang_code: ' . $item->tl->getTypeLangCode() . ', location_country_code: ' . $item->tl->getTypeLocationCountryCode();
-                            $data = array(
-                                'key' => $key_log,
-                                'change' => (count($change_field) > 0) ? implode($change_field, ', ') : '',
-                            );
-                            array_push($tn_log['data'], $data);
-                        }
-                    }
-                }
 
                 $msg_result = array();
                 $msg_result['status'] = 'success';
@@ -547,14 +495,15 @@ class TypeController extends ControllerBase
         }
     }
 
-    private function getParameter($selectAll = '')
+    private function getParameter()
     {
-        $lang = $this->request->get("slcLang", array('string', 'trim'));
+//        $lang = $this->request->get("slcLang", array('string', 'trim'));
         $type = $this->request->get("slType");
         $keyword = trim($this->request->get("txtSearch"));
-        $langCode = !empty($lang) ? $lang : $this->globalVariable->defaultLanguage;
-        $this->dispatcher->setParam("slcLang", $langCode);
-        $arrParameter = array('location_country_code' => $location_country_code);
+//        $langCode = !empty($lang) ? $lang : $this->globalVariable->defaultLanguage;
+//        $this->dispatcher->setParam("slcLang", $langCode);
+//        $arrParameter = array('location_country_code' => $location_country_code);
+        $arrParameter = array();
 
         $match = trim($this->request->get("radMatch"));
         if ($match == '') {
@@ -563,7 +512,6 @@ class TypeController extends ControllerBase
         $this->dispatcher->setParam("radMatch", $match);
 
         $validator = new Validator();
-        if ($langCode === $this->globalVariable->defaultLanguage) {
             $sql = "SELECT t.* FROM GlobalVisa\Models\VisaType t WHERE 1";
             if (!empty($keyword)) {
                 if ($validator->validInt($keyword)) {
@@ -583,32 +531,7 @@ class TypeController extends ControllerBase
                 }
                 $this->dispatcher->setParam("txtSearch", $keyword);
             }
-        } else {
-            $sql = "SELECT t.*, tl.* FROM GlobalVisa\Models\VisaType t 
-                    INNER JOIN \GlobalVisa\Models\VisaTypeLang tl
-                                ON tl.type_id = t.type_id AND tl.type_location_country_code = t.type_location_country_code AND  tl.type_lang_code = :lang_code:                           
-                    WHERE 1";
-            $arrParameter['lang_code'] = $langCode;
-            $this->dispatcher->setParam("slcLang", $langCode);
-            if (!empty($keyword)) {
-                if ($validator->validInt($keyword)) {
-                    $sql .= " AND (t.type_id = :number:)";
-                    $arrParameter['number'] = $keyword;
-                } else {
-                    if ($match == 'match') {
-                        $sql .= " AND (tl.type_name =:keyword: OR tl.type_title =:keyword:
-                                     OR tl.type_meta_keyword =:keyword: OR tl.type_meta_description =:keyword:
-                                    )";
-                    } else {
-                        $sql .= " AND (tl.type_name like CONCAT('%',:keyword:,'%') OR tl.type_title like CONCAT('%',:keyword:,'%')
-                                     OR tl.type_meta_keyword like CONCAT('%',:keyword:,'%') OR tl.type_meta_description like CONCAT('%',:keyword:,'%')
-                                     )";
-                    }
-                    $arrParameter['keyword'] = $keyword;
-                }
-                $this->dispatcher->setParam("txtSearch", $keyword);
-            }
-        }
+
         if (!empty($type)) {
             if ($validator->validInt($type) == false) {
                 $this->response->redirect("/notfound");
@@ -618,9 +541,10 @@ class TypeController extends ControllerBase
             $arrParameter["type_id"] = $type;
             $this->dispatcher->setParam("slType", $type);
         }
-        $sql .= " AND (t.type_location_country_code  = :location_country_code:" . $selectAll . ") ORDER BY t.type_id DESC";
+        $sql .= " ORDER BY t.type_id DESC";
         $data['para'] = $arrParameter;
         $data['sql'] = $sql;
+
         return $data;
     }
 

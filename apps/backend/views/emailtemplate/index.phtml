@@ -4,12 +4,6 @@ if(strlen($this->dispatcher->getParam("txtSearch"))> 0){
     if($urlPage != "?") $urlPage .= "&";
     $urlPage .= http_build_query(array("txtSearch" => $this->dispatcher->getParam("txtSearch")));
 }
-$slcLang = $this->dispatcher->getParam("slcLang");
-if(strlen($this->dispatcher->getParam("slcLang"))> 0){
-    if($urlPage != "?") $urlPage .= "&";
-    $urlPage .= http_build_query(array("slcLang" => $this->dispatcher->getParam("slcLang")));
-}
-
 ?>
 <div class="page-title">
     <div class="title_left">
@@ -49,14 +43,6 @@ if(!empty($message_success)) { ?>
                         </div>
                         <div class="col-md-4">
                             <input maxlength="255" class="form-control" type="text" name="txtSearch" placeholder="ID, Name" value="<?php echo isset($keyword) ? $keyword : ""; ?>">
-                        </div>
-                        <h2>Language</h2>
-                        <div class="col-md-3">
-                            <select class="form-control" name="slcLang" id="slcLang">
-                                <?php
-                                echo isset($select_lang) ? $select_lang : "";
-                                ?>
-                            </select>
                         </div>
                         <div class="col-md-2">
                             <button type="button" name="search" class="btn btn-success">Search</button>
@@ -100,7 +86,7 @@ if(!empty($message_success)) { ?>
                                         <span class="label label-<?php echo $classStatus; ?>"><?php echo $status; ?></span>
                                     </td>
                                     <td>
-                                        <a class="btn btn-primary btn-xs margin-0" href="<?php echo $this->url->get("/emailtemplate/edit?id=".$item->getEmailId(). "&slcLang=" . $slcLang); ?> ">View</a>
+                                        <a class="btn btn-primary btn-xs margin-0" href="<?php echo $this->url->get("/emailtemplate/edit?id=".$item->getEmailId()); ?> ">View</a>
                                     </td>
                                 </tr>
 

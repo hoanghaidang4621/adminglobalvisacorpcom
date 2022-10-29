@@ -2,6 +2,7 @@
 
 namespace GlobalVisa\Backend\Controllers;
 
+use GlobalVisa\Models\NewGroupApplicant;
 use GlobalVisa\Models\VisaLanguage;
 use GlobalVisa\Models\VisaGroupApplicant;
 use GlobalVisa\Models\VisaGroupApplicantLang;
@@ -45,7 +46,8 @@ class GroupapplicantController extends ControllerBase
 
     public function createAction()
     {
-        $data = array('group_id' => -1, 'group_active' => 'Y','group_order' => 1);
+        $this->view->pick($this->controllerName . '/model');
+        $data = array('group_id' => -1, 'group_active' => 'Y');
         $messages = array();
         if ($this->request->isPost()) {
             $data = array(
@@ -53,9 +55,8 @@ class GroupapplicantController extends ControllerBase
                 'group_value' => $this->request->getPost("txtValue", array('string', 'trim')),
                 'group_active' => $this->request->getPost("radActive"),
                 'group_order' => $this->request->getPost("txtOrder", array('string', 'trim')),
-
             );
-
+            var_dump($data);die();
             if (empty($data['group_name'])) {
                 $messages['group_name'] = "Name field is required.";
             }
@@ -64,13 +65,16 @@ class GroupapplicantController extends ControllerBase
             } elseif (!is_numeric($data['group_value'])) {
                 $messages["group_value"] = "Value  is number.";
             }
+            if (empty($data["group_active"])) {
+                $messages["group_order"] = "Active field is required.";
+            }
             if (empty($data["group_order"])) {
                 $messages["group_order"] = "Order field is required.";
             } elseif (!is_numeric($data['group_order'])) {
                 $messages["group_order"] = "Order  is number.";
             }
             if (count($messages) == 0) {
-                $new_group = new VisaGroupApplicant();
+                $new_group = new NewGroupApplicant();
                 $message = "We can't store your info now:" . "<br/>";
                 if ($new_group->save($data)) {
                     $message = 'Create the Group Apllicant ID: ' . $new_group->getGroupId() . ' success.';
@@ -97,128 +101,76 @@ class GroupapplicantController extends ControllerBase
 
     public function editAction()
     {
+        $this->view->pick($this->controllerName . '/model');
         $id = $this->request->get('id');
-        $group_model = GroupApplicant::findFirstById($id);
-        if(empty($group_model))
-        {
+        $checkID = new Validator();
+        if (!$checkID->validInt($id)) {
             return $this->response->redirect('notfound');
         }
-        $data_post = $group_model->toArray();
+        $groupApplicant = GroupApplicant::findFirstById($id);
+        if (empty($groupApplicant)) {
+            return $this->response->redirect('notfound');
+        }
+        $data = $groupApplicant->toArray();
         $messages = array();
-        $save_mode = '';
-        $lang_default = $this->globalVariable->defaultLanguage;
-        $lang_current = $lang_default;
-        $arr_language = Language::arrLanguages();
-        if($this->request->isPost()) {
-            if(!isset($_POST['save'])){
-                $this->view->disable();
-                $this->response->redirect("notfound");
-                return;
-            }
-            $save_mode =  $_POST['save'] ;
-            if (isset($arr_language[$save_mode])) {
-                $lang_current = $save_mode;
-            }
-            if($save_mode != VisaLanguage::GENERAL) {
-                $data_post['group_name'] = $this->request->getPost("txtName", array('string', 'trim'));
-                if (empty($data_post['group_name'])) {
-                    $messages[$save_mode]['group_name'] = 'Name field is required.';
-                }
-            } else {
-                $data_post['group_value'] =  $this->request->getPost("txtValue", array('string', 'trim'));
-                $data_post['group_active'] =  $this->request->getPost("radActive", array('string', 'trim'));
-                $data_post['group_order'] =  $this->request->getPost("txtOrder", array('string', 'trim'));
-                if (empty($data_post["group_value"])) {
-                    $messages["group_value"] = "Value field is required.";
-                } elseif (!is_numeric($data_post['group_value'])) {
-                    $messages["group_value"] = "Value  is number.";
-                }
-                if (empty($data_post["group_order"])) {
-                    $messages["group_order"] = "Order field is required.";
-                } elseif (!is_numeric($data_post['group_order'])) {
-                    $messages["group_order"] = "Order  is number.";
-                }
-
-            }
-            if(empty($messages)) {
-                switch ($save_mode) {
-                    case VisaLanguage::GENERAL:
-                        $result = $group_model->update($data_post);
-                        $info = VisaLanguage::GENERAL;
-
-                        break;
-                    case $this->globalVariable->defaultLanguage :
-                        $group_model->setGroupName($data_post['group_name']);
-                        $result = $group_model->save();
-                        $info = $arr_language[$save_mode];
-                        break;
-                    default:
-                        $group_lang_model = GroupApplicantLang::findFirstByIdAndLang($id, $save_mode);
-                        if (!$group_lang_model) {
-                            $group_lang_model = new VisaGroupApplicantLang();
-                            $group_lang_model->setGroupId($id);
-                            $group_lang_model->setGroupLangCode($save_mode);
-                        }
-                        $group_lang_model->setGroupName($data_post['group_name']);
-                        $result = $group_lang_model->save();
-                        $info = $arr_language[$save_mode];
-                        break;
-                }
-                if ($result) {
-                    $messages = array(
-                        'message' => ucfirst($info . " Update Group Applicant success"),
-                        'typeMessage' => "success",
-                    );
-                }else{
-                    $messages = array(
-                        'message' => "Update Group Applicantfail",
-                        'typeMessage' => "error",
-                    );
-                }
-            }
-        }
-        $item = array(
-            'group_id' =>$group_model->getGroupId(),
-            'group_name'=>($save_mode === $this->globalVariable->defaultLanguage)?$data_post['group_name']:$group_model->getGroupName(),
-        );
-        $arr_translate[$lang_default] = $item;
-        $arr_group_lang = GroupApplicantLang::findById($id);
-        foreach ($arr_group_lang as $group_lang){
-            $item = array(
-                'group_id'=>$group_lang->getGroupId(),
-                'group_name'=>($save_mode === $group_lang->getGroupLangCode())?$data_post['group_name']:$group_lang->getGroupName(),
+        if ($this->request->isPost()) {
+            $data = array(
+                'group_name' => $this->request->getPost("txtName", array('string', 'trim')),
+                'group_value' => $this->request->getPost("txtValue", array('string', 'trim')),
+                'group_order' => $this->request->getPost("txtOrder", array('string', 'trim')),
+                'group_active' => $this->request->getPost("radActive", array('string', 'trim'))
             );
-            $arr_translate[$group_lang->getGroupLangCode()] = $item;
+
+
+            if (empty($data['group_name'])) {
+                $messages['group_name'] = "Name field is required.";
+            }
+
+            if (empty($data['group_value'])) {
+                $messages['group_value'] = "Value field is required.";
+            } elseif (!is_numeric($data['group_value'])) {
+                $messages["group_value"] = "Value is number.";
+            }
+
+            if (empty($data['group_order'])) {
+                $messages['group_order'] = "Order field is required.";
+            } elseif (!is_numeric($data['group_order'])) {
+                $messages["group_order"] = "Order is number.";
+            }
+
+            if (empty($data['group_active'])) {
+                $messages['group_active'] = "Active field is required.";
+            }
+
+            if (count($messages) == 0) {
+                $msg_result = array();
+                if ($groupApplicant->update($data)) {
+                    $msg_result = array('status' => 'success', 'msg' => 'Edit group applicant Success');
+                } else {
+                    $message = "We can't store your info now: \n";
+                    foreach ($groupApplicant->getMessages() as $msg) {
+                        $message .= $msg . "\n";
+                    }
+                    $msg_result['status'] = 'error';
+                    $msg_result['msg'] = $message;
+                }
+                $this->session->set('msg_result', $msg_result);
+                return $this->response->redirect("/groupapplicant");
+            }
         }
-        if(!isset($arr_translate[$save_mode])&& isset($arr_language[$save_mode])){
-            $item = array(
-                'group_id'=> -1,
-                'group_name'=> $data_post['group_name'],
-            );
-            $arr_translate[$save_mode] = $item;
-        }
-        $formData = array(
-            'group_id'=>$group_model->getGroupId(),
-            'group_value' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['group_value']:$group_model->getGroupValue(),
-            'group_active' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['group_active']:$group_model->getGroupActive(),
-            'group_order' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['group_order']:$group_model->getGroupOrder(),
-            'arr_translate' => $arr_translate,
-            'arr_language' => $arr_language,
-            'lang_default' => $lang_default,
-            'lang_current' => $lang_current
-        );
-        $messages['status'] = 'border-red';
-        $this->view->setVars([
-            'formData' => $formData,
+        $messages["status"] = "border-red";
+        $this->view->setVars(array(
+            'title' => 'Edit Group Applicant',
+            'formData' => $data,
             'messages' => $messages,
-        ]);
-
+        ));
     }
+
     private function getParameter()
     {
         $keyword = trim($this->request->get("txtSearch"));
         $arrParameter = [];
-        $sql = "SELECT * FROM GlobalVisa\Models\VisaGroupApplicant AS m WHERE 1 ";
+        $sql = "SELECT * FROM GlobalVisa\Models\NewGroupApplicant AS m WHERE 1 ";
         if (!empty($keyword)) {
             $sql .= " AND m.group_id  = :keyword: OR m.group_name like CONCAT('%',:keyword:,'%') ";
             $arrParameter['keyword'] = $keyword;
@@ -234,23 +186,23 @@ class GroupapplicantController extends ControllerBase
         $items_checked = $this->request->getPost("item");
         if (!empty($items_checked)) {
             $msg_result = array();
-            $count_delete = 0;
+            $tn_log = array();
             foreach ($items_checked as $id) {
-                $item = GroupApplicant::findFirstById($id);
-                if ($item) {
-                    if ($item->delete() === false) {
-                        $message_delete = 'Can\'t delete the Group Applicant ID = ' . $item->getGroupId();
+                $group_applicant_item = GroupApplicant::findFirstById($id);
+                if ($group_applicant_item) {
+                    $msg_result = array();
+                    if ($group_applicant_item->delete() === false) {
+                        $message_delete = 'Can\'t delete the Arrival';
                         $msg_result['status'] = 'error';
-                        $msg_result['msg'] .= $message_delete;
-                    }else{
-                        $count_delete ++;
-                        GroupApplicantLang::deleteById($id);
+                        $msg_result['msg'] = $message_delete;
+                    } else {
+                        $tn_log[$id] = $group_applicant_item->toArray();
                     }
                 }
             }
         }
-        if ($count_delete > 0) {
-            $message_delete = 'Delete ' . $count_delete . ' Group Applicant successfully' . "<br>";
+        if ($tn_log > 0) {
+            $message_delete = 'Delete ' . count($tn_log) . ' Group Applicant successfully' . "<br>";
             $msg_result['status'] = 'success';
             $msg_result['msg'] .= $message_delete;
         }

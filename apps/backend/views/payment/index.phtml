@@ -7,45 +7,44 @@ $from_apply = $this->dispatcher->getParam("txtFromApply");
 $to_apply = $this->dispatcher->getParam("txtToApply");
 
 $urlPage = "?";
-if(strlen($this->dispatcher->getParam("txtSearch"))> 0){
-    if($urlPage != "?") $urlPage .= "&";
-    $urlPage .= http_build_query(array("txtSearch" => $keyword));
-}
-if(strlen($from_apply) > 0) {
-    if($urlPage != "?") $urlPage .= "&";
-    $urlPage .= http_build_query(array("txtFromApply" => $from_apply));
-}
-if(strlen($to_apply) > 0) {
-    if($urlPage != "?") $urlPage .= "&";
-    $urlPage .= http_build_query(array("txtToApply" => $to_apply));
-}
-$from_payment = $this->dispatcher->getParam("txtFromPayment");
-$to_payment = $this->dispatcher->getParam("txtToPayment");
-if(strlen($from_payment) > 0) {
-    if($urlPage != "?") $urlPage .= "&";
-    $urlPage .= http_build_query(array("txtFromPayment" => $from_payment));
-}
-if(strlen($to_payment) > 0) {
-    if($urlPage != "?") $urlPage .= "&";
-    $urlPage .= http_build_query(array("txtToPayment" => $to_payment));
-}
-$method = $this->dispatcher->getParam("slcMethod");
-if(strlen($method) > 0) {
-    if($urlPage != "?") $urlPage .= "&";
-    $urlPage .= http_build_query(array("slcActive" => $method));
-}
-$status = $this->dispatcher->getParam("slcStatus");
-if(strlen($status) > 0) {
-    if($urlPage != "?") $urlPage .= "&";
-    $urlPage .= http_build_query(array("slcStatus" => $status));
-}
-$country = $this->dispatcher->getParam("slcCountry");
-if(strlen($country) > 0) {
-    if($urlPage != "?") $urlPage .= "&";
-    $urlPage .= http_build_query(array("slcCountry" => $country));
-}
-
-?>
+        if(strlen($this->dispatcher->getParam("txtSearch"))> 0){
+            if($urlPage != "?") $urlPage .= "&";
+            $urlPage .= http_build_query(array("txtSearch" => $keyword));
+        }
+        if(strlen($from_apply) > 0) {
+            if($urlPage != "?") $urlPage .= "&";
+            $urlPage .= http_build_query(array("txtFromApply" => $from_apply));
+        }
+        if(strlen($to_apply) > 0) {
+            if($urlPage != "?") $urlPage .= "&";
+            $urlPage .= http_build_query(array("txtToApply" => $to_apply));
+        }
+        $from_payment = $this->dispatcher->getParam("txtFromPayment");
+        $to_payment = $this->dispatcher->getParam("txtToPayment");
+        if(strlen($from_payment) > 0) {
+            if($urlPage != "?") $urlPage .= "&";
+            $urlPage .= http_build_query(array("txtFromPayment" => $from_payment));
+        }
+        if(strlen($to_payment) > 0) {
+            if($urlPage != "?") $urlPage .= "&";
+            $urlPage .= http_build_query(array("txtToPayment" => $to_payment));
+        }
+        $method = $this->dispatcher->getParam("slcMethod");
+        if(strlen($method) > 0) {
+            if($urlPage != "?") $urlPage .= "&";
+            $urlPage .= http_build_query(array("slcActive" => $method));
+        }
+        $status = $this->dispatcher->getParam("slcStatus");
+        if(strlen($status) > 0) {
+            if($urlPage != "?") $urlPage .= "&";
+            $urlPage .= http_build_query(array("slcStatus" => $status));
+        }
+        $country = $this->dispatcher->getParam("slcCountry");
+        if(strlen($country) > 0) {
+            if($urlPage != "?") $urlPage .= "&";
+            $urlPage .= http_build_query(array("slcCountry" => $country));
+        }
+        ?>
 <div class="page-title">
     <div class="title_left">
         <h3>Make Payment</h3>

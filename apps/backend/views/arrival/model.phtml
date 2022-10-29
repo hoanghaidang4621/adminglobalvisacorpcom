@@ -1,0 +1,124 @@
+<script>
+    $(document).ready(function () {
+        $('form[name=arrival-form]').submit(function (event) {
+            var valid = true;
+
+            if ($('select[name=slcCountry]').val() == '') {
+                $('.msg-country').text('Country field is required.');
+                $('#slcCountry').addClass("border-red");
+                valid = false;
+            } else {
+                $('.msg-country').text('');
+                $('#slcCountry').removeClass("border-red");
+            }
+
+            if ($('input[name=txtTimeZone]').val() == '') {
+                $('.msg-timezone').text('Timezone field is required.');
+                $('#txtTimeZone').addClass("border-red");
+                valid = false;
+            } else if (isNaN($('input[name=txtTimeZone]').val())) {
+                $('.msg-timezone').text('Enter a valid time zone.');
+                $('#txtTimeZone').addClass("border-red");
+                valid = false;
+            } else {
+                $('.msg-timezone').text('');
+                $('#txtTimeZone').removeClass("border-red");
+            }
+
+            if ($('input[name=txtOrder]').val() == '') {
+                $('.msg-order').text('Order field is required.');
+                $('#txtOrder').addClass("border-red");
+                valid = false;
+            } else if (isNaN($('input[name=txtOrder]').val())) {
+                $('.msg-order').text('Enter a valid order.');
+                $('#txtOrder').addClass("border-red");
+                valid = false;
+            } else {
+                $('.msg-order').text('');
+                $('#txtOrder').removeClass("border-red");
+            }
+
+
+            if (!valid) event.preventDefault();
+            if (valid) {
+                $('button[name=submit]').prop('disabled', true);
+            }
+        });
+    });
+
+</script>
+<div class="page-title">
+    <div class="title_left">
+        <h3 class="type-title">Arrival</h3>
+    </div>
+</div>
+<div class="clearfix"></div>
+<div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="x_panel">
+            <div class="x_title">
+                <h2 class="form_title"><?php echo isset($title)?$title:''; ?></h2>
+                <div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+                <br/>
+                <form name="arrival-form" id="language-form" data-parsley-validate
+                      class="form-horizontal form-label-left" method="post">
+                    <div class="form-group">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="slcType">Country <span
+                                class="text-danger">*</span></label>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <select id="slcCountry" name="slcCountry"
+                                    class="form-control <?php echo isset($messages["select_country"]) ? $messages["status"] : ""; ?>">
+                                <option value="">Select Country...</option>
+                                <?= isset($select_country) ? $select_country : ""
+                                ?>
+                            </select>
+                            <span class="text-danger msg-country"><?php echo isset($messages["article_type_id"]) ? $messages["article_type_id"] : "" ?></span>
+                            <span class="text-danger"><?php echo isset($messages["check_exits"]) ? $messages["check_exits"] : "" ?></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="last-name">Time zone <span class="text-danger">*</span>
+                        </label>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <input maxlength="10" value="<?php echo isset($formData["arrival_country_timezone"]) ? $formData["arrival_country_timezone"] : "" ?>" type="text" id="txtTimeZone" name="txtTimeZone"  class="form-control col-md-7 col-xs-12 <?php echo (isset($messages["arrival_country_timezone"])) ? $messages["arrival_country_timezone"] : ""; ?>">
+                            <span class="text-danger msg-timezone"><?php echo isset($messages["arrival_country_timezone"]) ? $messages["arrival_country_timezone"] : "";?></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="last-name">Order <span class="text-danger">*</span>
+                        </label>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <input maxlength="10" value="<?php echo isset($formData["arrival_order"]) ? $formData["arrival_order"] : "" ?>" type="text" id="txtOrder" name="txtOrder"  class="form-control col-md-7 col-xs-12 <?php echo (isset($messages["type_order"])) ? $messages["status"] : ""; ?>">
+                            <span class="text-danger msg-order"><?php echo isset($messages["arrival_order"]) ? $messages["arrival_order"] : "";?></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="middle-name" class="control-label col-md-3 col-sm-3 col-xs-12">Active</label>
+                        <div class="col-md-6 col-sm-6 col-xs-12 form-check">
+                            <label class="container_radio">
+                                <input type="radio" name="radActive"
+                                                                  value="Y" <?php echo (isset($formData["arrival_active"]) && $formData["arrival_active"] == "Y") ? "checked" : ''; ?>>Yes<span
+                                    class="checkmark"></span></label>
+                            <label class="container_radio">
+                                <input type="radio" name="radActive"
+                                                                  value="N" <?php echo (isset($formData["arrival_active"]) && $formData["arrival_active"] == "N") ? "checked" : ''; ?>>No<span
+                                    class="checkmark"></span></label>
+                            <span class="text-danger msg-active"><?php echo isset($messages["arrival_active"]) ? $messages["arrival_active"] : "";?></span>
+                        </div>
+                    </div>
+
+                    <div class="ln_solid"></div>
+                    <div class="form-port">
+                        <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+                            <button name="submit" type="submit" class="btn btn-success">Save change</button>
+                            <a class="btn btn-primary" href="<?php echo $this->url->get("/arrival"); ?>">Cancel</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

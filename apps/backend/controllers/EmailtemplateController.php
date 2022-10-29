@@ -2,11 +2,10 @@
 
 namespace GlobalVisa\Backend\Controllers;
 
+use GlobalVisa\Models\NewTemplateEmail;
 use GlobalVisa\Models\VisaTemplateEmail;
 use GlobalVisa\Models\VisaTemplateEmailLang;
 use GlobalVisa\Repositories\EmailTemplate;
-use GlobalVisa\Repositories\EmailTemplateLang;
-use GlobalVisa\Repositories\Language;
 use GlobalVisa\Utils\Validator;
 use Phalcon\Paginator\Adapter\NativeArray;
 
@@ -15,21 +14,12 @@ class EmailtemplateController extends ControllerBase
     public function indexAction()
     {
         $current_page = $this->request->getQuery('page');
-        $lang = $this->request->get('slcLang', array('string', 'trim'));
-        $langCode = !empty($lang) ? $lang : $this->globalVariable->defaultLanguage;
-        $data = $this->getParameter($langCode);
+        $data = $this->getParameter();
         $list_email_template =  $this->modelsManager->executeQuery($data['sql'], $data['para']);
         $result = array();
         if ($list_email_template && sizeof($list_email_template) > 0) {
-            if ($langCode != $this->globalVariable->defaultLanguage) {
-                foreach ($list_email_template as $item) {
-                    $result[] = \Phalcon\Mvc\Model::cloneResult(
-                        new VisaTemplateEmail(), array_merge($item->p->toArray(), $item->pl->toArray()));
-                }
-            } else {
-                foreach ($list_email_template as $item) {
-                    $result[] = \Phalcon\Mvc\Model::cloneResult(new VisaTemplateEmail(), $item->toArray());
-                }
+            foreach ($list_email_template as $item) {
+                $result[] = \Phalcon\Mvc\Model::cloneResult(new NewTemplateEmail(), $item->toArray());
             }
         }
         $paginator = new NativeArray(
@@ -49,20 +39,18 @@ class EmailtemplateController extends ControllerBase
             $msg_result = $this->session->get('msg_del');
             $this->session->remove('msg_del');
             $this->view->msg_del = $msg_result;
-        }
-        $select_lang = Language::getCombo($langCode);
+        };
         $this->view->setVars(array(
             'list_email_template' => $paginator->getPaginate(),
-            'select_lang' => $select_lang,
         ));
     }
 
     public function createAction()
     {
-        $data = array('email_id' => -1, 'email_status' => 'Y');
+        $this->view->pick($this->controllerName.'/model');
+        $data = array( 'email_status' => 'Y');
         if ($this->request->isPost()) {
             $data = array(
-                'email_id' => -1,
                 'email_type' => $this->request->getPost("txtType", array('string', 'trim')),
                 'email_subject' => $this->request->getPost("txtSubject", array('string', 'trim')),
                 'email_pre_header' => $this->request->getPost("txtPreHeader"),
@@ -76,7 +64,7 @@ class EmailtemplateController extends ControllerBase
                 $messages["type"] = "Type field is exist.";
             }
             if (count($messages) == 0) {
-                $new_emailTemplate = new VisaTemplateEmail();
+                $new_emailTemplate = new NewTemplateEmail();
                 $new_emailTemplate->setEmailType($data['email_type']);
                 $new_emailTemplate->setEmailSubject($data['email_subject']);
                 $new_emailTemplate->setEmailPreHeader($data['email_pre_header']);
@@ -100,22 +88,19 @@ class EmailtemplateController extends ControllerBase
 
     public function editAction()
     {
+        $this->view->pick($this->controllerName.'/model');
         $id = $this->request->getQuery('id');
         $checkID = new Validator();
         if (!$checkID->validInt($id)) {
+            var_dump(11);die();
             return $this->response->redirect('notfound');
         }
 
-        $lang_current = $this->request->get('slcLang', array('string', 'trim'));
-        $arr_language = Language::arrLanguages();
-        if(!in_array($lang_current, array_keys($arr_language))) {
-            return $this->response->redirect('notfound');
-        }
         $email_template_model = EmailTemplate::findFirstById($id);
         if (empty($email_template_model)) {
+            var_dump(22);die();
             return $this->response->redirect('notfound');
         }
-        $arr_translate = array();
         $messages = array();
         $data_post = array(
             'email_type' => '',
@@ -124,110 +109,45 @@ class EmailtemplateController extends ControllerBase
             'email_content' => '',
             'email_status' => '',
         );
-        $save_mode = '';
         if ($this->request->isPost()) {
             if (!isset($_POST['save'])) {
                 $this->view->disable();
                 $this->response->redirect("notfound");
                 return;
             }
-            $save_mode = $_POST['save'];
-            if (isset($arr_language[$save_mode])) {
-                $lang_current = $save_mode;
-            }
-
-            if ($save_mode != 'general') {
-                $data_post['email_subject'] = $this->request->get("txtSubject", array('string', 'trim'));
-                $data_post['email_pre_header'] = trim($this->request->get("txtPreHeader"));
-                $data_post['email_content'] = trim($this->request->get("txtContent"));
-            } else {
-                $data_post['email_type'] = $this->request->get("txtType", array('string', 'trim'));
-                $data_post['email_status'] = $this->request->getPost('radStatus');
-
-                if (empty($data_post['email_type'])) {
-                    $messages['type'] = 'Type field is required.';
-                }else if (EmailTemplate::checkKeyword($data_post["email_type"], $id)) {
-                    $messages["type"] = "Type field is exist.";
-                }
+            $data_post['email_subject'] = $this->request->get("txtSubject", array('string', 'trim'));
+            $data_post['email_pre_header'] = trim($this->request->get("txtPreHeader"));
+            $data_post['email_content'] = trim($this->request->get("txtContent"));
+            $data_post['email_type'] = $this->request->get("txtType", array('string', 'trim'));
+            $data_post['email_status'] = $this->request->getPost('radStatus');
+            if (empty($data_post['email_type'])) {
+                $messages['type'] = 'Type field is required.';
+            }else if (EmailTemplate::checkKeyword($data_post["email_type"], $id)) {
+                $messages["type"] = "Type field is exist.";
             }
             if (empty($messages)) {
-                switch ($save_mode) {
-                    case 'general':
-                        $email_template_model->setEmailType($data_post['email_type']);
-                        $email_template_model->setEmailStatus($data_post['email_status']);
-                        $result = $email_template_model->update();
-                        $info = "General";
-                        break;
-                    case $this->globalVariable->defaultLanguage :
-                        $email_template_model->setEmailSubject($data_post['email_subject']);
-                        $email_template_model->setEmailPreHeader($data_post['email_pre_header']);
-                        $email_template_model->setEmailContent($data_post['email_content']);
-                        $result = $email_template_model->update();
-                        $info = $arr_language[$save_mode];
-                        break;
-                    default:
-                        $email_template_lang_model = EmailTemplateLang::findFirstByIdAndLang($id, $save_mode);
-                        if (!$email_template_lang_model) {
-                            $email_template_lang_model = new VisaTemplateEmailLang();
-                            $email_template_lang_model->setEmailId($id);
-                            $email_template_lang_model->setEmailLangCode($save_mode);
-
-                        }
-                        $email_template_lang_model->setEmailSubject($data_post['email_subject']);
-                        $email_template_model->setEmailPreHeader($data_post['email_pre_header']);
-                        $email_template_lang_model->setEmailContent($data_post['email_content']);
-                        $result = $email_template_lang_model->save();
-                        $info = $arr_language[$save_mode];
-                        break;
-                }
-                if ($result) {
-                    $messages = array(
-                        'message' => ucfirst($info . " Update Email Template success"),
-                        'typeMessage' => "success",
-                    );
+                $msg_result = array();
+                if ($email_template_model->update($data_post)) {
+                    $msg_result = array('status' => 'success', 'msg' => 'Edit Port Success');
                 } else {
-                    $messages = array(
-                        'message' => "Update Email Template fail",
-                        'typeMessage' => "error",
-                    );
+                    $message = "We can't store your info now: \n";
+                    foreach ($email_template_model->getMessages() as $msg) {
+                        $message .= $msg . "\n";
+                    }
+                    $msg_result['status'] = 'error';
+                    $msg_result['msg'] = $message;
                 }
+                $this->session->set('msg_result', $msg_result);
+                return $this->response->redirect("/emailtemplate");
             }
-        }
-        $item = array(
-            'email_id' => $email_template_model->getEmailId(),
-            'email_subject' => ($save_mode === $this->globalVariable->defaultLanguage) ? $data_post['email_subject'] : $email_template_model->getEmailSubject(),
-            'email_pre_header' => ($save_mode === $this->globalVariable->defaultLanguage) ? $data_post['email_pre_header'] : $email_template_model->getEmailPreHeader(),
-            'email_content' => ($save_mode === $this->globalVariable->defaultLanguage) ? $data_post['email_content'] : $email_template_model->getEmailContent(),
-
-        );
-        $arr_translate[$this->globalVariable->defaultLanguage] = $item;
-        $arr_email_template_lang = VisaTemplateEmailLang::findById($id);
-        foreach ($arr_email_template_lang as $email_template_lang) {
-            $item = array(
-                'email_id' => $email_template_lang->getEmailId(),
-                'email_subject' => ($save_mode === $email_template_lang->getEmailLangCode()) ? $data_post['email_subject'] : $email_template_lang->getEmailSubject(),
-                'email_pre_header' => ($save_mode === $email_template_lang->getEmailLangCode()) ? $data_post['email_pre_header'] : $email_template_lang->getEmailPreHeader(),
-                'email_content' => ($save_mode === $email_template_lang->getEmailLangCode()) ? $data_post['email_content'] : $email_template_lang->getEmailContent(),
-            );
-            $arr_translate[$email_template_lang->getEmailLangCode()] = $item;
-        }
-        if (!isset($arr_translate[$save_mode]) && isset($arr_language[$save_mode])) {
-            $item = array(
-                'email_id' => -1,
-                'email_subject' => $data_post['email_subject'],
-                'email_pre_header' => $data_post['email_pre_header'],
-                'email_content' => $data_post['email_content'],
-                'email_pre_header' => $data_post['email_pre_header'],
-            );
-            $arr_translate[$save_mode] = $item;
         }
         $formData = array(
             'email_id' => $email_template_model->getEmailId(),
-            'email_type' => ($save_mode === 'general') ? $data_post['email_type'] : $email_template_model->getEmailType(),
-            'email_status' => ($save_mode === 'general') ? $data_post['email_status'] : $email_template_model->getEmailStatus(),
-            'arr_translate' => $arr_translate,
-            'arr_language' => $arr_language,
-            'lang_current' => $lang_current
+            'email_type' => $email_template_model->getEmailType(),
+            'email_subject' => $email_template_model->getEmailSubject(),
+            'email_pre_header' => $email_template_model->getEmailPreHeader(),
+            'email_content' => $email_template_model->getEmailContent(),
+            'email_status' =>$email_template_model->getEmailStatus(),
         );
         $messages['status'] = 'border-red';
         $this->view->setVars(array(
@@ -239,31 +159,24 @@ class EmailtemplateController extends ControllerBase
     public function deleteAction()
     {
         $email_template_checked = $this->request->getPost("item");
-        $lang = $this->request->getPost('slcLang');
         $msg_result =array();
-        if (!empty($email_template_checked) && isset($lang)) {
+        if (!empty($email_template_checked)) {
             $total = 0;
             foreach ($email_template_checked as $id) {
-                if ($lang == $this->globalVariable->defaultLanguage) {
-                    $email_template_item = EmailTemplate::findFirstById($id);
-                } else {
-                    $email_template_item = EmailTemplateLang::findFirstByIdAndLang($id,$lang);
-                }
+                $email_template_item = EmailTemplate::findFirstById($id);
                 if ($email_template_item) {
+                    $msg_result = array();
                     if ($email_template_item->delete() === false) {
-                        $message_delete = 'Can\'t delete the Email Template Subject = ' . $email_template_item->getEmailSubject();
+                        $message_delete = 'Can\'t delete the Port Name = ' . $email_template_item->getEmailType();
                         $msg_result['status'] = 'error';
                         $msg_result['msg'] = $message_delete;
                     } else {
-                        $total ++;
-                        if ($lang == $this->globalVariable->defaultLanguage) {
-                            EmailTemplateLang::deleteById($id);
-                        }
+                        $tn_log[$id] = $email_template_item->toArray();
                     }
                 }
             }
-            if ($total > 0) {
-                $message_delete = 'Delete ' . $total . ' Email Template successfully.';
+            if (count($tn_log) > 0) {
+                $message_delete = 'Delete ' . count($tn_log) . ' Email Template successfully.';
                 $msg_result['status'] = 'success';
                 $msg_result['msg'] = $message_delete;
             }
@@ -271,34 +184,15 @@ class EmailtemplateController extends ControllerBase
             return $this->response->redirect("/emailtemplate");
         }
     }
-    private function getParameter($langCode)
+    private function getParameter()
     {
-        $this->dispatcher->setParam("slcLang", $langCode);
         $keyword = trim($this->request->get("txtSearch"));
-        $validator = new Validator();
         $arrParameter = array();
-        if ($langCode === $this->globalVariable->defaultLanguage) {
-            $sql = "SELECT p.* FROM GlobalVisa\Models\VisaTemplateEmail p WHERE 1";;
-            if (!empty($keyword)) {
-                $sql .= " AND email_id = :keyword: OR email_type like CONCAT('%',:keyword:,'%') OR email_subject like CONCAT('%',:keyword:,'%')";
-                $arrParameter['keyword'] = $keyword;
-                $this->dispatcher->setParam("txtSearch", $keyword);
-            }
-        } else {
-            $sql = "SELECT p.*, pl.* FROM GlobalVisa\Models\VisaTemplateEmail p 
-                    INNER JOIN \GlobalVisa\Models\VisaTemplateEmailLang pl
-                    ON pl.email_id  = p.email_id  AND  pl.email_lang_code  = :lang_code: WHERE 1";
-            $arrParameter['lang_code'] = $langCode;
-            if (!empty($keyword)) {
-                if ($validator->validInt($keyword)) {
-                    $sql .= " AND p.email_id = :number:";
-                    $arrParameter['number'] = $keyword;
-                } else {
-                    $sql .= " AND pl.email_subject like CONCAT('%',:keyword:,'%') OR p.email_type like CONCAT('%',:keyword:,'%')";
-                    $arrParameter['keyword'] = $keyword;
-                }
-                $this->dispatcher->setParam("txtSearch", $keyword);
-            }
+        $sql = "SELECT p.* FROM GlobalVisa\Models\NewTemplateEmail p WHERE 1";;
+        if (!empty($keyword)) {
+            $sql .= " AND email_id = :keyword: OR email_type like CONCAT('%',:keyword:,'%') OR email_subject like CONCAT('%',:keyword:,'%')";
+            $arrParameter['keyword'] = $keyword;
+            $this->dispatcher->setParam("txtSearch", $keyword);
         }
         $sql .= " ORDER BY p.email_id DESC";
         $data['para'] = $arrParameter;

@@ -1,10 +1,28 @@
 <?php
 
 namespace GlobalVisa\Models;
+use Phalcon\Di;
 
-class VisaPayment extends \Phalcon\Mvc\Model
+class VisaPayment extends BaseModel
 {
+    const METHOD_PAYPAL_DIRECT = 'Credit/Debit Card (Paypal)';
+    const METHOD_2C2P_DIRECT        = 'Credit/Debit Card (2C2P)';
+    const METHOD_CYBERSOURCE   = 'Credit/Debit Card (CyberSource)';
+    const METHOD_AMERICAN_EXPRESS  = 'Credit/Debit Card (Amex)';
+    const METHOD_STRIPE        = 'Credit/Debit Card (Stripe)';
+    const METHOD_PAYPAL        = 'Paypal';
 
+    const PAYMENT_CYBERSOURCE = 'credit_debit_card';
+    const PAYMENT_PAYPAL_DIRECT = 'credit_debit_card2';
+    const PAYMENT_STRIPE = 'credit_debit_card3';
+    const PAYMENT_2C2P_DIRECT       = 'credit_debit_card4';
+    const PAYMENT_PAYPAL = 'checkout';
+    const PAYMENT_AMERICAN_EXPRESS = 'amex_card';
+
+    const STATUS_SUCCESS = 'Success';
+    const STATUS_FAIL = 'Fail';
+    const STATUS_PENDING = 'Pending';
+    const STATUS_PROCESSING = 'Processing';
     /**
      *
      * @var integer
@@ -600,5 +618,64 @@ class VisaPayment extends \Phalcon\Mvc\Model
     {
         return 'visa_payment';
     }
+    /**
+     * Allows to query a set of records that match the specified conditions
+     *
+     * @param mixed $parameters
+     * @return \Indianimmigrationorg\Models\VisaPayment[]|VisaPayment|\Phalcon\Mvc\Model\ResultSetInterface
+     */
+    public static function find($parameters = null)
+    {
+        return parent::find($parameters);
+    }
 
+    /**
+     * Allows to query the first record that match the specified conditions
+     *
+     * @param mixed $parameters
+     * @return VisaPayment|\Phalcon\Mvc\Model\ResultInterface
+     */
+    public static function findFirst($parameters = null)
+    {
+        return parent::findFirst($parameters);
+    }
+
+    public function getFormattedId()
+    {
+        $di = Di::getDefault();
+        $my = $di->get('my');
+        return $my->formatPaymentID($this->getPaymentInsertdate(), $this->getPaymentId());
+    }
+
+    public function getInvoiceFileName()
+    {
+        $di = Di::getDefault();
+        $my = $di->get('my');
+        return $my->getPdfInvoicePaymentName($this->getFormattedId(), $this->getPaymentInsertdate());
+    }
+
+    public function getInvoiceFile()
+    {
+        $date = $this->getPaymentInsertdate();
+        $year = date("Y", $date);
+        $month = date("m", $date);
+        $invoice_file = 'pdf/uploads' . (defined('TEST_MODE') && TEST_MODE ? '_test' : '') . '/makepayment/' . $year . '/' . $month . '/' . $this->getInvoiceFileName();
+        return $invoice_file;
+    }
+
+    public function getReceiptFileName()
+    {
+        $di = Di::getDefault();
+        $my = $di->get('my');
+        return $my->getPdfReceiptPaymentName($this->getFormattedId(), $this->getPaymentInsertdate());
+    }
+
+    public function getReceiptFile()
+    {
+        $date = $this->getPaymentInsertdate();
+        $year = date("Y", $date);
+        $month = date("m", $date);
+        $invoice_file = 'pdf/uploads' . (defined('TEST_MODE') && TEST_MODE ? '_test' : '') . '/makepayment/' . $year . '/' . $month . '/' . $this->getReceiptFileName();
+        return $invoice_file;
+    }
 }

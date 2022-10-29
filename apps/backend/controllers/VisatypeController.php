@@ -2,19 +2,23 @@
 
 namespace GlobalVisa\Backend\Controllers;
 
+use GlobalVisa\Models\NewVisaType;
 use GlobalVisa\Models\VisaLanguage;
-use GlobalVisa\Models\VisaVisaType;
-use GlobalVisa\Models\VisaVisaTypeLang;
 use Phalcon\Paginator\Adapter\Model as PaginatorModel;
-use GlobalVisa\Repositories\Language;
 use GlobalVisa\Repositories\VisaType;
-use GlobalVisa\Repositories\VisaTypeLang;
 use GlobalVisa\Utils\Validator;
+
 class VisatypeController extends ControllerBase
 {
     public function indexAction()
     {
-        $list_type = $this->getParameter();
+
+        $arrival_id = $this->request->get("slcArrivalCountry");
+        if(is_null($arrival_id)){
+            $arrival_id = [];
+        }
+        $list_type = $this->getParameter($arrival_id);
+        $country_code = VisaType::getArrival($arrival_id);
         $current_page = $this->request->get('page');
         $validator = new Validator();
         if ($validator->validInt($current_page) == false || $current_page < 1)
@@ -40,23 +44,22 @@ class VisatypeController extends ControllerBase
             'list_data' => $paginator->getPaginate(),
             'msg_result' => $msg_result,
             'msg_delete' => $msg_delete,
+            'select_arrival_country' => $country_code,
         ));
     }
 
     public function createAction()
     {
-        $data = array('type_id' => -1, 'type_active' => 'Y','type_order' => 1);
+        $data = array('type_id' => -1, 'type_active' => 'Y', 'type_order' => 1, 'type_arrival_id' => '');
         $messages = array();
         if ($this->request->isPost()) {
             $data = array(
                 'type_group_name' => $this->request->getPost("txtGroupName", array('string', 'trim')),
                 'type_name' => $this->request->getPost("txtName", array('string', 'trim')),
-                'type_icon' => $this->request->getPost("txtIcon", array('string', 'trim')),
+                'type_arrival_id' => trim($this->request->getPost("slcArrival")),
                 'type_active' => $this->request->getPost("radActive"),
                 'type_order' => $this->request->getPost("txtOrder", array('string', 'trim')),
                 'type_description' => trim($this->request->getPost("txtDescription")),
-                'type_ineligible_content' => trim($this->request->getPost("txtIneligibleContent")),
-                'type_required_content' => trim($this->request->getPost("txtRequiredContent")),
                 'type_document_requirement' => trim($this->request->getPost("txtDocumentRequirement")),
             );
             if (empty($data['type_group_name'])) {
@@ -64,6 +67,12 @@ class VisatypeController extends ControllerBase
             }
             if (empty($data['type_name'])) {
                 $messages['type_name'] = "Name field is required.";
+            }
+            if (empty($data['type_arrival_id'])) {
+                $messages['type_arrival_id'] = "Arrival field is required.";
+            }
+            if (empty($data['type_active'])) {
+                $messages['type_active'] = "Active field is required.";
             }
             if (empty($data["type_order"])) {
                 $messages["type_order"] = "Order field is required.";
@@ -74,7 +83,7 @@ class VisatypeController extends ControllerBase
                 $messages['type_description'] = "Description field is required.";
             }
             if (count($messages) == 0) {
-                $new_type = new VisaVisaType();
+                $new_type = new NewVisaType();
                 $message = "We can't store your info now:" . "<br/>";
                 if ($new_type->save($data)) {
                     $message = 'Create the Type ID: ' . $new_type->getTypeId() . ' success.';
@@ -90,100 +99,67 @@ class VisatypeController extends ControllerBase
                 return;
             }
         }
+        $country_code = VisaType::getArrival($data['type_arrival_id']);
         $messages["status"] = "border-red";
         $data['mode'] = 'create';
         $this->view->setVars(array(
             'title' => 'Create Visa Type',
             'formData' => $data,
             'messages' => $messages,
+            'select_arrival' => $country_code,
         ));
     }
 
     public function editAction()
     {
         $id = $this->request->get('id');
+        $data = array('type_arrival_id' => '');
         $type_model = VisaType::findFirstById($id);
-        if(empty($type_model))
-        {
+        if (empty($type_model)) {
             return $this->response->redirect('notfound');
         }
         $data_post = $type_model->toArray();
+        $data['type_arrival_id'] = $data_post['type_arrival_id'];
         $messages = array();
-        $save_mode = '';
-        $lang_default = $this->globalVariable->defaultLanguage;
-        $lang_current = $lang_default;
-        $arr_language = Language::arrLanguages();
-        if($this->request->isPost()) {
-            if(!isset($_POST['save'])){
-                $this->view->disable();
-                $this->response->redirect("notfound");
-                return;
+        if ($this->request->isPost()) {
+            $data_post['type_group_name'] = $this->request->getPost("txtGroupName", array('string', 'trim'));
+            $data_post['type_name'] = $this->request->getPost("txtName", array('string', 'trim'));
+            $data_post['type_arrival_id'] = trim($this->request->getPost("slcArrival"));
+            $data_post['type_active'] = $this->request->getPost("radActive");
+            $data_post['type_order'] = $this->request->getPost("txtOrder", array('string', 'trim'));
+            $data_post['type_description'] = trim($this->request->getPost("txtDescription"));
+            $data_post['type_document_requirement'] = trim($this->request->getPost("txtDocumentRequirement"));
+            var_dump($data_post);
+            if (empty($data_post['type_group_name'])) {
+                $messages['type_group_name'] = "Group Type field is required.";
             }
-            $save_mode =  $_POST['save'] ;
-            if (isset($arr_language[$save_mode])) {
-                $lang_current = $save_mode;
+            if (empty($data_post['type_name'])) {
+                $messages['type_name'] = "Name field is required.";
             }
-            if($save_mode != VisaLanguage::GENERAL) {
-                $data_post['type_group_name'] = $this->request->getPost("txtGroupName", array('string', 'trim'));
-                $data_post['type_name'] = $this->request->getPost("txtName", array('string', 'trim'));
-                $data_post['type_description'] = trim($this->request->get("txtDescription"));
-                $data_post['type_ineligible_content'] = trim($this->request->getPost("txtIneligibleContent"));
-                $data_post['type_required_content'] = trim($this->request->getPost("txtRequiredContent"));
-                $data_post['type_document_requirement'] = trim($this->request->getPost("txtDocumentRequirement"));
-                if (empty($data_post['type_group_name'])) {
-                    $messages[$save_mode]['type_name'] = 'Group Name field is required.';
-                }
-                if (empty($data_post['type_name'])) {
-                    $messages[$save_mode]['type_name'] = 'Name field is required.';
-                }
-                if (empty($data_post['type_description'])) {
-                    $messages[$save_mode]['type_description'] = 'Description field is required.';
-                }
-            } else {
-                $data_post['type_icon'] =  $this->request->getPost("txtIcon", array('string', 'trim'));
-                $data_post['type_active'] =  $this->request->getPost("radActive", array('string', 'trim'));
-                $data_post['type_order'] =  $this->request->getPost("txtOrder", array('string', 'trim'));
-                if (empty($data_post["type_order"])) {
-                    $messages["type_order"] = "Order field is required.";
-                } elseif (!is_numeric($data_post['type_order'])) {
-                    $messages["type_order"] = "Order  is number.";
-                }
-
+            if (empty($data_post['type_arrival_id'])) {
+                $messages['type_arrival_id'] = "Arrival field is required.";
             }
-            if(empty($messages)) {
-                switch ($save_mode) {
-                    case VisaLanguage::GENERAL:
-                        $result = $type_model->update($data_post);
-                        $info = VisaLanguage::GENERAL;
-
-                        break;
-                    case $this->globalVariable->defaultLanguage :
-                        $result = $type_model->update($data_post);
-                        $info = $arr_language[$save_mode];
-                        break;
-                    default:
-                        $type_lang_model = VisaTypeLang::findFirstByIdAndLang($id, $save_mode);
-                        if (!$type_lang_model) {
-                            $type_lang_model = new VisaVisaTypeLang();
-                            $type_lang_model->setTypeId($id);
-                            $type_lang_model->setTypeLangCode($save_mode);
-                        }
-                        $type_lang_model->setTypeGroupName($data_post['type_group_name']);
-                        $type_lang_model->setTypeName($data_post['type_name']);
-                        $type_lang_model->setTypeDescription($data_post['type_description']);
-                        $type_lang_model->setTypeIneligibleContent($data_post['type_ineligible_content']);
-                        $type_lang_model->setTypeRequiredContent($data_post['type_required_content']);
-                        $type_lang_model->setTypeDocumentRequirement($data_post['type_document_requirement']);
-                        $result = $type_lang_model->save();
-                        $info = $arr_language[$save_mode];
-                        break;
-                }
+            if (empty($data_post['type_active'])) {
+                $messages['type_active'] = "Active field is required.";
+            }
+            if (empty($data_post["type_order"])) {
+                $messages["type_order"] = "Order field is required.";
+            } elseif (!is_numeric($data_post['type_order'])) {
+                $messages["type_order"] = "Order  is number.";
+            }
+            if (empty($data_post['type_description'])) {
+                $messages['type_description'] = "Description field is required.";
+            }
+            if (empty($messages)) {
+                $type_model = VisaType::findFirstById($id);
+                $result = $type_model->update($data_post);
                 if ($result) {
+                    $data['type_arrival_id'] = $data_post['type_arrival_id'];
                     $messages = array(
-                        'message' => ucfirst($info . " Update Visa Type success"),
+                        'message' => ucfirst(" Update Visa Type success"),
                         'typeMessage' => "success",
                     );
-                }else{
+                } else {
                     $messages = array(
                         'message' => "Update Visa Type fail",
                         'typeMessage' => "error",
@@ -191,70 +167,49 @@ class VisatypeController extends ControllerBase
                 }
             }
         }
-        $item = array(
-            'type_id' =>$type_model->getTypeId(),
-            'type_group_name'=>($save_mode === $this->globalVariable->defaultLanguage)?$data_post['type_group_name']:$type_model->getTypeGroupName(),
-            'type_name'=>($save_mode === $this->globalVariable->defaultLanguage)?$data_post['type_name']:$type_model->getTypeName(),
-            'type_description'=>($save_mode === $this->globalVariable->defaultLanguage)?$data_post['type_description']:$type_model->getTypeDescription(),
-            'type_ineligible_content'=>($save_mode === $this->globalVariable->defaultLanguage)?$data_post['type_ineligible_content']:$type_model->getTypeIneligibleContent(),
-            'type_required_content'=>($save_mode === $this->globalVariable->defaultLanguage)?$data_post['type_required_content']:$type_model->getTypeRequiredContent(),
-            'type_document_requirement'=>($save_mode === $this->globalVariable->defaultLanguage)?$data_post['type_document_requirement']:$type_model->getTypeDocumentRequirement(),
-        );
-        $arr_translate[$lang_default] = $item;
-        $arr_type_lang = VisaTypeLang::findById($id);
-        foreach ($arr_type_lang as $type_lang){
-            $item = array(
-                'type_id'=>$type_lang->getTypeId(),
-                'type_group_name'=>($save_mode === $type_lang->getTypeLangCode())?$data_post['type_group_name']:$type_lang->getTypeGroupName(),
-                'type_name'=>($save_mode === $type_lang->getTypeLangCode())?$data_post['type_name']:$type_lang->getTypeName(),
-                'type_description'=>($save_mode === $type_lang->getTypeLangCode())?$data_post['type_description']:$type_lang->getTypeDescription(),
-                'type_ineligible_content'=>($save_mode === $type_lang->getTypeLangCode())?$data_post['type_ineligible_content']:$type_lang->getTypeIneligibleContent(),
-                'type_required_content'=>($save_mode === $type_lang->getTypeLangCode())?$data_post['type_required_content']:$type_lang->getTypeRequiredContent(),
-                'type_document_requirement'=>($save_mode === $type_lang->getTypeLangCode())?$data_post['type_document_requirement']:$type_lang->getTypeDocumentRequirement(),
-            );
-            $arr_translate[$type_lang->getTypeLangCode()] = $item;
-        }
-        if(!isset($arr_translate[$save_mode])&& isset($arr_language[$save_mode])){
-            $item = array(
-                'type_id'=> -1,
-                'type_group_name'=> $data_post['type_group_name'],
-                'type_name'=> $data_post['type_name'],
-                'type_description'  => $data_post['type_description'],
-                'type_ineligible_content'   => $data_post['type_ineligible_content'],
-                'type_required_content'=>   $data_post['type_required_content'],
-                'type_document_requirement'=>$data_post['type_document_requirement'],
-            );
-            $arr_translate[$save_mode] = $item;
-        }
+
         $formData = array(
-            'type_id'=>$type_model->getTypeId(),
-            'type_icon' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['type_icon']:$type_model->getTypeIcon(),
-            'type_active' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['type_active']:$type_model->getTypeActive(),
-            'type_order' => ($save_mode ===VisaLanguage::GENERAL)?$data_post['type_order']:$type_model->getTypeOrder(),
-            'arr_translate' => $arr_translate,
-            'arr_language' => $arr_language,
-            'lang_default' => $lang_default,
-            'lang_current' => $lang_current
+            'type_id' => $type_model->getTypeId(),
+            'type_group_name' => $type_model->getTypeGroupName(),
+            'type_name' => $type_model->getTypeName(),
+            'type_arrival_id' => $type_model->getTypeArrivalId(),
+            'type_description' => $type_model->getTypeDescription(),
+            'type_document_requirement' => $type_model->getTypeDocumentRequirement(),
+            'type_order' => $type_model->getTypeOrder(),
+            'type_active' => $type_model->getTypeActive()
         );
+
         $messages['status'] = 'border-red';
+        $country_code = VisaType::getArrival($data['type_arrival_id']);
         $this->view->setVars([
             'formData' => $formData,
             'messages' => $messages,
+            'select_arrival' => $country_code,
         ]);
 
     }
-    private function getParameter()
+
+    private function getParameter($arrival_id)
     {
         $keyword = trim($this->request->get("txtSearch"));
         $arrParameter = [];
-        $sql = "SELECT * FROM GlobalVisa\Models\VisaVisaType AS m WHERE 1 ";
+        $sql = "SELECT m.type_id,m.type_name,m.type_group_name,m.type_group_name,m.type_active,m.type_order, c.country_name FROM 
+        GlobalVisa\Models\NewVisaType AS m 
+        INNER JOIN GlobalVisa\Models\NewArrival AS a  ON m.type_arrival_id = a.arrival_id
+        INNER JOIN GlobalVisa\Models\NewCountry AS c ON a.arrival_country_code = c.country_code WHERE 1 ";
         if (!empty($keyword)) {
             $sql .= " AND m.type_id  = :keyword: OR m.type_name like CONCAT('%',:keyword:,'%') ";
             $arrParameter['keyword'] = $keyword;
             $this->dispatcher->setParam("txtSearch", $keyword);
         }
+        if (!empty($arrival_id)) {
+            $sql .= " AND m.type_arrival_id  = :arrival_id: ";
+            $arrParameter['arrival_id'] = $arrival_id;
+            $this->dispatcher->setParam("slcArrivalCountry", $arrival_id);
+        }
 
         $sql .= " ORDER BY m.type_id DESC";
+
         return $this->modelsManager->executeQuery($sql, $arrParameter);
     }
 
@@ -271,9 +226,9 @@ class VisatypeController extends ControllerBase
                         $message_delete = 'Can\'t delete the Visa Type ID = ' . $item->getTypeId();
                         $msg_result['status'] = 'error';
                         $msg_result['msg'] .= $message_delete;
-                    }else{
-                        $count_delete ++;
-                        VisaTypeLang::deleteById($id);
+                    } else {
+                        $count_delete++;
+                        VisaType::deleteById($id);
                     }
                 }
             }

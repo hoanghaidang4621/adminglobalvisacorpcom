@@ -4,6 +4,10 @@ if(strlen($this->dispatcher->getParam("txtSearch"))> 0){
     if($urlPage != "?") $urlPage .= "&";
     $urlPage .= http_build_query(array("txtSearch" => $this->dispatcher->getParam("txtSearch")));
 }
+if(strlen($this->dispatcher->getParam("slcGroup"))> 0){
+    if($urlPage != "?") $urlPage .= "&";
+    $urlPage .= http_build_query(array("slcGroup" => $this->dispatcher->getParam("slcGroup")));
+}
 ?>
 <div class="page-title">
     <div class="title_left">
@@ -56,8 +60,14 @@ if(!empty($message_success)) { ?>
                         <div class="col-md-2">
                             <input maxlength="255" class="form-control" type="text" name="txtSearch" placeholder="ID, Name" value="<?php echo isset($keyword) ? $keyword : ""; ?>">
                         </div>
-
-
+                        <div class="col-md-3">
+                            <select class="form-control" name="slcGroup" id="slcGroup">
+                                <option value="">All group extra service</option>
+                                <?php
+                                echo isset($group_extra_service) ? $group_extra_service : "";
+                                ?>
+                            </select>
+                        </div>
                         <div class="col-md-1 ">
                             <button type="button" name="search" class="btn btn-success">Search</button>
                         </div>

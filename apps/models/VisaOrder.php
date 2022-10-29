@@ -4,6 +4,10 @@ namespace GlobalVisa\Models;
 
 class VisaOrder extends \Phalcon\Mvc\Model
 {
+    const STATUS_SUCCESS = 'Success';
+    const STATUS_FAIL = 'Fail';
+    const STATUS_PENDING = 'Pending';
+    const STATUS_CANCEL = 'Cancel';
     public function initialize()
     {
 //        $this->belongsTo(
